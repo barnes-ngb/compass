@@ -56,7 +56,11 @@ def load_config() -> Config:
         gemini_api_key=_env("GEMINI_API_KEY") or None,
         vision_prompt=_env(
             "VISION_PROMPT",
-            "In 8 words or fewer, name the most prominent subject. No punctuation.",
+            "Describe what you see in 1–2 short phrases (under 18 words total). "
+            "If the image contains drawings, dimensions, materials, fasteners, "
+            "panels, fabrication marks, part numbers, or anything that looks "
+            "shop- or build-relevant, surface those first. Otherwise just "
+            "describe the scene plainly.",
         ),
         coach_provider=_env("COACH_PROVIDER", "claude").lower(),
         coach_model=_env("COACH_MODEL", "claude-sonnet-4-6"),
