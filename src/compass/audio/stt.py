@@ -39,3 +39,20 @@ class NullSTT:
             "STT is a Phase 2 feature. Recommended local dependency: "
             "faster-whisper. See docs/decisions/0006-memory-layers.md."
         )
+
+
+class MockSTT:
+    """Deterministic STT for testing retro-mode wiring.
+
+    Treats the audio_bytes payload as already-UTF-8-encoded text and decodes
+    it. This pairs with MockRollingBuffer, which encodes its canned transcript
+    to UTF-8 in snapshot(). Returns the decoded string; returns "" for empty input.
+    """
+
+    def transcribe(self, audio_bytes: bytes) -> str:
+        if not audio_bytes:
+            return ""
+        try:
+            return audio_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            return "[unintelligible mock audio]"

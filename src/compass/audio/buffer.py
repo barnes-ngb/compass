@@ -72,3 +72,39 @@ class NullRollingBuffer:
         return 0.0
 
     def close(self) -> None: ...
+
+
+class MockRollingBuffer:
+    """Deterministic in-memory buffer for testing retro mode wiring.
+
+    Holds a configurable canned transcript snippet. start()/stop() flip an
+    internal flag; snapshot() returns a small bytes payload (the canned
+    transcript encoded as UTF-8) so STT can transcribe a known string back.
+    duration() returns a fake elapsed-time counter that advances with each
+    snapshot() call (lets retro-mode tests reason about time without real audio).
+    """
+
+    def __init__(self, canned_transcript: str = "what did they just ask about Q3 panels") -> None:
+        self._canned = canned_transcript
+        self._started = False
+        self._fake_seconds = 0.0
+        self._closed = False
+
+    def start(self) -> None:
+        if self._closed:
+            raise RuntimeError("Cannot start a closed buffer")
+        self._started = True
+
+    def stop(self) -> None:
+        self._started = False
+
+    def snapshot(self, seconds: float | None = None) -> bytes:  # noqa: ARG002
+        self._fake_seconds += 30.0
+        return self._canned.encode("utf-8")
+
+    def duration(self) -> float:
+        return self._fake_seconds if self._started else 0.0
+
+    def close(self) -> None:
+        self._closed = True
+        self._started = False
