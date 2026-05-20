@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+from compass.audio.buffer import MockRollingBuffer, RollingBuffer
+from compass.audio.stt import MockSTT, STT
 from compass.coach.base import CoachProvider
 from compass.coach.mock import MockCoach
 from compass.glasses.base import Glasses
@@ -32,6 +34,26 @@ def test_mock_vision_satisfies_protocol() -> None:
 def test_mock_coach_satisfies_protocol() -> None:
     coach = MockCoach()
     assert isinstance(coach, CoachProvider)
+
+
+def test_mock_rolling_buffer_satisfies_protocol() -> None:
+    buf = MockRollingBuffer()
+    assert isinstance(buf, RollingBuffer)
+
+
+def test_mock_stt_satisfies_protocol() -> None:
+    stt = MockSTT()
+    assert isinstance(stt, STT)
+
+
+def test_mock_audio_roundtrip() -> None:
+    """Buffer + STT round-trip: canned transcript → bytes → STT → original string."""
+    buf = MockRollingBuffer(canned_transcript="hello compass")
+    buf.start()
+    audio = buf.snapshot()
+    stt = MockSTT()
+    assert stt.transcribe(audio) == "hello compass"
+    buf.close()
 
 
 def test_glasses_protocol_is_structural() -> None:
