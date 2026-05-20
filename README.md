@@ -80,10 +80,15 @@ py -3.11 -m venv .venv
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 
-# 5. Config
+# 5. Install compass itself (editable). This is what makes `python -m compass` resolve.
+pip install -e .
+
+# 6. Config
 Copy-Item .env.example .env
 notepad .env   # paste ANTHROPIC_API_KEY
 ```
+
+> **Why step 5 matters:** compass uses a `src/` layout. Without `pip install -e .`, Python doesn't know where to find the `compass` package and `python -m compass` fails with `No module named compass`. The `-e` flag means "editable" — your code edits are picked up immediately, no reinstall needed.
 
 ---
 
@@ -175,6 +180,7 @@ git push -u origin main
 
 | Problem | Fix |
 |---|---|
+| `No module named compass` when running `python -m compass` | You skipped step 5. Run `pip install -e .` in the activated venv. |
 | Venv activation blocked | `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` (no admin needed) |
 | Webcam black frame | Close Teams/Zoom/OBS; or set `CAMERA_INDEX=1` |
 | `anthropic.AuthenticationError` | Check `ANTHROPIC_API_KEY` starts with `sk-ant-` |

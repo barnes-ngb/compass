@@ -25,10 +25,15 @@ dist/
 Thumbs.db
 .DS_Store
 
-# Captured images / runtime artifacts
+# Runtime artifacts (audio, images, sqlite)
 captures/
+sessions/
 *.jpg
 *.jpeg
 *.png
+*.wav
+*.mp3
+*.sqlite
+*.sqlite-journal
 !docs/**/*.png
 !docs/**/*.jpg

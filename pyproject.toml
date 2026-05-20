@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "compass"
+version = "0.0.1"
+description = "A pull-default, glance-paced AI coach with persistent layered memory."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = { text = "MIT" }
+authors = [{ name = "Nathan Barnes" }]
+keywords = ["smart-glasses", "ai-coach", "vlm", "wearable", "hud"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+]
+dependencies = [
+    "anthropic>=0.40.0",
+    "python-dotenv>=1.0.0",
+    "pillow>=10.0.0",
+    "opencv-python>=4.9.0",
+]
+
+[project.optional-dependencies]
+audio = [
+    "sounddevice>=0.4.6",
+    "faster-whisper>=1.0.0",
+    "numpy>=1.26.0",
+]
+frame = [
+    # Community-maintained Brilliant Labs Frame Python packages (CitizenOne).
+    # See docs/decisions/0004-hardware-strategy.md.
+    "frame-ble>=1.1.1",
+    "frame-msg>=5.2.1",
+]
+gemini = [
+    "google-generativeai>=0.8.0",
+]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+compass = "compass.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/barnes-ngb/compass"
+Issues = "https://github.com/barnes-ngb/compass/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["compass*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
