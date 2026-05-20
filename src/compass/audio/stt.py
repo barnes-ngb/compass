@@ -17,8 +17,17 @@ from typing import Protocol, runtime_checkable
 
 @runtime_checkable
 class STT(Protocol):
+    """Speech-to-text. Stateless — every call is independent.
+
+    Per ADR 0005, STT is invoked on-demand: in verbal mode it transcribes
+    a short live capture; in retro mode it transcribes a RollingBuffer
+    snapshot. Implementations may be local (faster-whisper) or cloud
+    (Deepgram, AssemblyAI).
+    """
+
     def transcribe(self, audio_bytes: bytes) -> str:
-        """Return transcript text. Empty string if nothing intelligible."""
+        """Return the transcribed text. Empty string for silence/unintelligible.
+        Raises on backend errors (do not swallow)."""
         ...
 
 

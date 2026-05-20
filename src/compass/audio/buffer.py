@@ -21,22 +21,37 @@ from typing import Protocol, runtime_checkable
 
 @runtime_checkable
 class RollingBuffer(Protocol):
+    """Rolling audio buffer. RAM-only, never persisted.
+
+    Per docs/decisions/0006-memory-layers.md, the buffer is the lowest
+    layer of the memory pipeline. It holds the last N minutes of audio,
+    overwriting oldest as new audio comes in. Raw audio bytes never leave
+    the in-memory buffer; only STT-derived transcripts are persisted.
+    """
+
     def start(self) -> None:
-        """Begin armed capture. Audio fills the buffer until stop()."""
+        """Begin capturing audio from the configured input device.
+        Idempotent — calling start() on an already-started buffer is a no-op."""
         ...
 
     def stop(self) -> None:
-        """End armed capture. Buffer is cleared."""
+        """Stop capturing audio. The buffer's contents may still be queried
+        via snapshot() until close() is called."""
         ...
 
-    def snapshot(self, last_seconds: int) -> bytes:
-        """Return raw audio bytes from the last `last_seconds`.
-
-        Caller is responsible for handing this to STT and then discarding it.
-        """
+    def snapshot(self, seconds: float | None = None) -> bytes:
+        """Return the last `seconds` of audio as a single bytes blob (WAV format).
+        If seconds is None, return the entire buffer contents."""
         ...
 
-    def is_armed(self) -> bool: ...
+    def duration(self) -> float:
+        """Return the current buffer fill, in seconds.
+        Returns 0.0 if the buffer hasn't been started yet."""
+        ...
+
+    def close(self) -> None:
+        """Release the input device and clear the buffer."""
+        ...
 
 
 class NullRollingBuffer:
@@ -50,8 +65,10 @@ class NullRollingBuffer:
 
     def stop(self) -> None: ...
 
-    def snapshot(self, last_seconds: int) -> bytes:  # noqa: ARG002
+    def snapshot(self, seconds: float | None = None) -> bytes:  # noqa: ARG002
         raise NotImplementedError("Audio capture is a Phase 2 feature.")
 
-    def is_armed(self) -> bool:
-        return False
+    def duration(self) -> float:
+        return 0.0
+
+    def close(self) -> None: ...
