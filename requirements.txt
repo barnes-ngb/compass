@@ -1,0 +1,10 @@
+# Core
+anthropic>=0.40.0          # Claude SDK with vision support
+python-dotenv>=1.0.0       # .env loading
+pillow>=10.0.0             # Image conversion / resizing
+opencv-python>=4.9.0       # Webcam capture for mock glasses
+
+# Dev / future
+# frame-sdk                # Uncomment when Phase 1 starts (real Frame)
+# google-generativeai      # Uncomment if you flip on Gemini
+# pytest                   # Uncomment when adding real tests
