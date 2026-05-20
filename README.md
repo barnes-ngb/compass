@@ -66,12 +66,12 @@ No admin rights. No Docker. No global installs.
 ## Setup (PowerShell)
 
 ```powershell
-# 1. Clone (after you create the GitHub repo — see "Push to GitHub" at bottom)
+# 1. Clone
 git clone https://github.com/barnes-ngb/compass.git
 cd compass
 
 # 2. Per-user venv
-py -3.11 -m venv .venv
+py -3 -m venv .venv
 
 # 3. Activate (if execution policy blocks: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned — no admin needed)
 .\.venv\Scripts\Activate.ps1
