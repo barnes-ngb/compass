@@ -62,3 +62,7 @@ The name appears in: the repo, the Python package, the voice trigger (`"hey comp
 - **`recall`** — describes the Retro mode perfectly but undersells Visual and Verbal.
 - **`peripheral`** — clever (lives at the edge of vision and attention) but abstract and forgettable.
 - **`Alfred`, `Clippy`, manufactured-letter names like `periX`** — `Alfred` is too borrowed from existing metaphors (every personal-AI is named after a butler or assistant). `Clippy` carries the wrong vibe. Manufactured-letter names read as "trying to be memorable" rather than memorable.
+
+## Postscript: 2026-05-20 — sibling-repo framing updated
+
+The original ADR positions compass as the glance-paced sibling of scan-to-action. After the sibling-repo audit (see `docs/inspection/2026-05-20-sibling-repos.md`), the framing is updated: directive-engine is the developed sibling and houses both deviation and directive logic today; scan-to-action remains as a stub for the aspirational scan-side ingest layer. The "sibling-of-scan-to-action" framing in this ADR's body is preserved as historical context but should be read alongside the current `docs/portfolio-fit.md`.

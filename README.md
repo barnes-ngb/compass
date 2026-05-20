@@ -12,7 +12,7 @@ All three feed and draw from a **layered, lossy memory pipeline** — rolling au
 
 The hardware is abstracted. Today the visual mode runs against a mock (laptop webcam + simulated HUD window) so the whole pipeline is built and iterated before any glasses arrive. When real hardware ships, only the driver in `src/compass/glasses/` changes.
 
-This project is the glance-paced sibling of [scan-to-action](https://github.com/barnes-ngb/) — same instrument pattern (*capture → reconcile → directive → log*), different rhythm of human attention. See `docs/portfolio-fit.md`.
+This project is the glance-paced field surface for the directive family — the deviation and directive computation live in [directive-engine](https://github.com/barnes-ngb/directive-engine) (built), with [scan-to-action](https://github.com/barnes-ngb/scan-to-action) reserved as the future scan-side ingest layer (not yet implemented). See `docs/portfolio-fit.md`.
 
 ---
 
