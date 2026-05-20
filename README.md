@@ -159,7 +159,6 @@ git push -u origin feature/short-description
 gh pr create --fill   # or open in the GitHub web UI
 ```
 
-
 **Via Claude Code web** — prompt Claude with the change you want; it opens a PR on a `claude/<short-description>` branch for review.
 
 Either way, every change is one branch, one PR, reviewed before merge.
