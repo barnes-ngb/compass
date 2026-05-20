@@ -55,7 +55,7 @@ Pull-default — compass speaks when invoked, not when it feels like it. Persist
 ## Requirements
 
 - Windows 10/11 (PowerShell 5.1+ or 7)
-- Python 3.11 or 3.12
+- Python 3.11 or newer (tested on 3.11, 3.12, 3.13)
 - A webcam (built-in is fine)
 - An Anthropic API key — https://console.anthropic.com/
 
@@ -145,34 +145,24 @@ src/compass/
 
 ---
 
-## Push to GitHub
+## Branching workflow
 
-The repo doesn't exist on GitHub yet. Two options:
+Updates land via PRs, not pushes to main. Two ways to make changes:
 
-**A — GitHub CLI** (if installed; `winget install GitHub.cli` works without admin in user scope):
+**Locally** — branch from main, edit, push, open a PR:
 
 ```powershell
-cd path\to\compass
-git init
-git add .
-git commit -m "Phase 0: project scaffold and mock pipeline"
-gh auth login   # once
-gh repo create barnes-ngb/compass --public --source=. --remote=origin --push
+git checkout -b feature/short-description
+# ...edit...
+git add . ; git commit -m "concise message"
+git push -u origin feature/short-description
+gh pr create --fill   # or open in the GitHub web UI
 ```
 
-**B — Web UI:**
 
-1. Create empty repo at https://github.com/new (owner `barnes-ngb`, name `compass`, no README/license).
-2. Then:
-```powershell
-cd path\to\compass
-git init
-git add .
-git commit -m "Phase 0: project scaffold and mock pipeline"
-git branch -M main
-git remote add origin https://github.com/barnes-ngb/compass.git
-git push -u origin main
-```
+**Via Claude Code web** — prompt Claude with the change you want; it opens a PR on a `claude/<short-description>` branch for review.
+
+Either way, every change is one branch, one PR, reviewed before merge.
 
 ---
 
@@ -184,11 +174,10 @@ git push -u origin main
 | Venv activation blocked | `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` (no admin needed) |
 | Webcam black frame | Close Teams/Zoom/OBS; or set `CAMERA_INDEX=1` |
 | `anthropic.AuthenticationError` | Check `ANTHROPIC_API_KEY` starts with `sk-ant-` |
-| OpenCV fails on Python 3.13 | Use 3.11 or 3.12 — wheels lag |
 | Tkinter window doesn't show | Reinstall Python with tcl/tk checked |
 
 ---
 
 ## License
 
-MIT. Add `LICENSE` after first push.
+MIT — see [LICENSE](LICENSE).
