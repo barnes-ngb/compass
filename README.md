@@ -84,6 +84,8 @@ pip install -r requirements.txt
 # 5. Install compass itself (editable). This is what makes `python -m compass` resolve.
 pip install -e .
 
+# To enable real audio capture for retro mode (Phase 2): pip install -e ".[audio]"
+
 # 6. Config
 Copy-Item .env.example .env
 notepad .env   # paste ANTHROPIC_API_KEY
