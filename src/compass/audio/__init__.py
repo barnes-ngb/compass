@@ -13,3 +13,10 @@ except (ImportError, OSError):
     # ImportError: audio extra not installed.
     # OSError: sounddevice present but PortAudio (libportaudio2) missing.
     pass
+
+try:
+    from compass.audio.whisper_stt import WhisperSTT
+
+    __all__.append("WhisperSTT")
+except ImportError:
+    pass

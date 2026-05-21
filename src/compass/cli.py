@@ -7,6 +7,7 @@ import os
 import sys
 
 from compass.audio.buffer import RollingBuffer
+from compass.audio.stt import STT
 from compass.config import Config, load_config
 from compass.coach.base import CoachProvider
 from compass.glasses.base import Glasses
@@ -55,6 +56,23 @@ def _build_audio_buffer(cfg: Config) -> RollingBuffer:
     raise SystemExit(f"Unknown AUDIO_BUFFER={kind!r}. Use 'mock' or 'laptop'.")
 
 
+def _build_stt(cfg: Config) -> STT:
+    kind = os.environ.get("STT_PROVIDER", "mock").strip().lower()
+    if kind == "mock":
+        from compass.audio.stt import MockSTT
+        return MockSTT()
+    if kind == "whisper":
+        try:
+            from compass.audio.whisper_stt import WhisperSTT
+        except ImportError as exc:
+            raise SystemExit(
+                "STT_PROVIDER=whisper requires the audio extra. "
+                'Install with: pip install -e ".[audio]"'
+            ) from exc
+        return WhisperSTT()
+    raise SystemExit(f"Unknown STT_PROVIDER={kind!r}. Use 'mock' or 'whisper'.")
+
+
 def _build_coach(cfg: Config) -> CoachProvider:
     if cfg.coach_provider == "mock":
         from compass.coach.mock import MockCoach
@@ -96,10 +114,9 @@ def main() -> None:
         coach = _build_coach(cfg)
         run_verbal(glasses, coach, memory)
     elif mode == "retro":
-        from compass.audio.stt import MockSTT
         coach = _build_coach(cfg)
         buffer = _build_audio_buffer(cfg)
-        stt = MockSTT()
+        stt = _build_stt(cfg)
         run_retro(glasses, buffer, stt, coach, memory)
     else:
         raise SystemExit(f"Unknown mode {mode!r}. Use visual, verbal, or retro.")
