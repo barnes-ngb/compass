@@ -4,15 +4,17 @@ All three modes share the Glasses + memory infrastructure. They diverge in
 where the input comes from (camera / mic-now / mic-buffer) and which provider
 handles the inference (vision vs coach).
 
-Phase 0 status: visual mode runs end-to-end against the mock glasses. Verbal
-and retro modes are scaffolded but raise NotImplementedError — they will light
-up once we wire the audio buffer and STT in Phase 2.
+Phase 0 status: visual mode runs end-to-end against the mock glasses. Retro
+mode runs end-to-end against the mock audio buffer + mock STT. Verbal mode
+is still scaffolded and raises NotImplementedError.
 """
 
 from __future__ import annotations
 
 import time
 
+from compass.audio.buffer import RollingBuffer
+from compass.audio.stt import STT
 from compass.coach.base import CoachProvider
 from compass.glasses.base import Glasses
 from compass.memory.store import MemoryStore
@@ -72,22 +74,56 @@ def run_verbal(
 
 def run_retro(
     glasses: Glasses,
-    coach: CoachProvider,  # noqa: ARG001
-    memory: MemoryStore,  # noqa: ARG001
+    buffer: RollingBuffer,
+    stt: STT,
+    coach: CoachProvider,
+    memory: MemoryStore,
+    intent: str = "what did they just ask about",
+    snapshot_seconds: float = 300.0,
 ) -> None:
-    """Button-press → process rolling buffer → coach → HUD. Phase 2.
+    """Button-press → buffer snapshot → STT → coach → HUD.
 
-    The rolling audio buffer is always armed (RAM only, never persisted).
-    On button-press, the last N minutes of audio is transcribed and passed
-    to the coach with current memory context. The coach returns a short
-    HUD directive ("they asked about Q3 numbers", "you decided 16-ga steel").
+    The rolling audio buffer runs during the session (RAM only, never persisted).
+    On button-press, the last `snapshot_seconds` of audio is transcribed and
+    passed to the coach with current memory context. The coach returns a short
+    HUD directive.
     """
-    raise NotImplementedError(
-        "Retro mode is a Phase 2 stub. Needs the rolling buffer "
-        "(audio/buffer.py), STT (audio/stt.py), and the coach provider "
-        "wired together. See docs/decisions/0005-coach-modes.md and "
-        "docs/decisions/0006-memory-layers.md."
-    )
+    glasses.connect()
+    buffer.start()
+    try:
+        glasses.show_text("Compass ready", "SPACE = ask retro", color="cloudblue")
+        while True:
+            if not glasses.wait_for_trigger():
+                break
+            glasses.show_text("Listening back...", color="yellow")
+
+            t0 = time.perf_counter()
+            try:
+                audio = buffer.snapshot(seconds=snapshot_seconds)
+                transcript = stt.transcribe(audio)
+                memory_context = ""  # Phase 3 will populate from recent sessions
+                answer = coach.respond(intent, transcript, memory_context)
+            except Exception as exc:  # noqa: BLE001
+                glasses.show_text("Retro error", str(exc)[:32], color="red")
+                continue
+            dt = time.perf_counter() - t0
+
+            if not answer:
+                glasses.show_text("(no answer)", color="grey")
+                continue
+
+            line1, line2 = _two_lines(answer, max1=28, max2=32)
+            glasses.show_text(line1, line2 or f"{dt:.1f}s", color="green")
+
+            memory.log_event(
+                mode="retro",
+                query=intent,
+                response=answer,
+                duration_s=dt,
+            )
+    finally:
+        buffer.close()
+        glasses.close()
 
 
 # ---- helpers ----------------------------------------------------------------
