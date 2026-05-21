@@ -113,6 +113,56 @@ def test_memory_roundtrip() -> None:
         assert events[0]["duration_s"] == 1.4
 
 
+class _TestGlasses:
+    """Programmatic test fixture — one trigger, then exit."""
+    def __init__(self) -> None:
+        self._fired = False
+        self.last_text: tuple[str, str] | None = None
+
+    def connect(self) -> None: ...
+
+    def wait_for_trigger(self) -> bool:
+        if self._fired:
+            return False
+        self._fired = True
+        return True
+
+    def capture_image(self) -> bytes:
+        return b""
+
+    def show_text(self, line1: str, line2: str = "", *, color: str = "green") -> None:
+        self.last_text = (line1, line2)
+
+    def close(self) -> None: ...
+
+
+def test_run_retro_loops_once_and_logs() -> None:
+    """Retro mode: one synthetic trigger → buffer → STT → coach → memory logged."""
+    import tempfile
+    from compass.memory.store import MemoryStore
+    from compass.audio.buffer import MockRollingBuffer
+    from compass.audio.stt import MockSTT
+    from compass.coach.mock import MockCoach
+    from compass.pipeline import run_retro
+
+    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
+        db_path = tmp.name
+    memory = MemoryStore(db_path=db_path)
+
+    glasses = _TestGlasses()
+    buffer = MockRollingBuffer(canned_transcript="they asked about Q3 panel schedule")
+    stt = MockSTT()
+    coach = MockCoach()
+
+    run_retro(glasses, buffer, stt, coach, memory)
+
+    # One event should be logged in retro mode.
+    events = memory.recent_events(limit=5)
+    assert len(events) == 1
+    assert events[0]["mode"] == "retro"
+    assert events[0]["response"]  # non-empty
+
+
 def test_memory_session_lifecycle() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         db = Path(tmp) / "test.sqlite"

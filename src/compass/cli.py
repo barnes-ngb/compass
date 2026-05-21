@@ -77,8 +77,12 @@ def main() -> None:
         coach = _build_coach(cfg)
         run_verbal(glasses, coach, memory)
     elif mode == "retro":
+        from compass.audio.buffer import MockRollingBuffer
+        from compass.audio.stt import MockSTT
         coach = _build_coach(cfg)
-        run_retro(glasses, coach, memory)
+        buffer = MockRollingBuffer()
+        stt = MockSTT()
+        run_retro(glasses, buffer, stt, coach, memory)
     else:
         raise SystemExit(f"Unknown mode {mode!r}. Use visual, verbal, or retro.")
 
