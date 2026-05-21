@@ -46,6 +46,19 @@ def test_mock_stt_satisfies_protocol() -> None:
     assert isinstance(stt, STT)
 
 
+def test_laptop_mic_buffer_satisfies_protocol_if_installed() -> None:
+    """LaptopMicBuffer must satisfy RollingBuffer when sounddevice is available."""
+    try:
+        from compass.audio.laptop_mic import LaptopMicBuffer
+    except (ImportError, OSError):
+        pytest.skip("sounddevice/PortAudio not available; LaptopMicBuffer unavailable")
+
+    # Don't actually start the stream in tests — just check the protocol shape.
+    buf = LaptopMicBuffer()
+    from compass.audio.buffer import RollingBuffer
+    assert isinstance(buf, RollingBuffer)
+
+
 def test_mock_audio_roundtrip() -> None:
     """Buffer + STT round-trip: canned transcript → bytes → STT → original string."""
     buf = MockRollingBuffer(canned_transcript="hello compass")

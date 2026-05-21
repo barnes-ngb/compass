@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
+from compass.audio.buffer import RollingBuffer
 from compass.config import Config, load_config
 from compass.coach.base import CoachProvider
 from compass.glasses.base import Glasses
@@ -34,6 +36,23 @@ def _build_vision(cfg: Config) -> VisionProvider:
         from compass.vision.gemini import GeminiVision
         return GeminiVision(api_key=cfg.gemini_api_key or "")
     raise SystemExit(f"Unknown VISION_PROVIDER={cfg.vision_provider!r}.")
+
+
+def _build_audio_buffer(cfg: Config) -> RollingBuffer:
+    kind = os.environ.get("AUDIO_BUFFER", "mock").strip().lower()
+    if kind == "mock":
+        from compass.audio.buffer import MockRollingBuffer
+        return MockRollingBuffer()
+    if kind == "laptop":
+        try:
+            from compass.audio.laptop_mic import LaptopMicBuffer
+        except ImportError as exc:
+            raise SystemExit(
+                "AUDIO_BUFFER=laptop requires the audio extra. "
+                'Install with: pip install -e ".[audio]"'
+            ) from exc
+        return LaptopMicBuffer(max_seconds=cfg.audio_buffer_minutes * 60.0)
+    raise SystemExit(f"Unknown AUDIO_BUFFER={kind!r}. Use 'mock' or 'laptop'.")
 
 
 def _build_coach(cfg: Config) -> CoachProvider:
@@ -77,10 +96,9 @@ def main() -> None:
         coach = _build_coach(cfg)
         run_verbal(glasses, coach, memory)
     elif mode == "retro":
-        from compass.audio.buffer import MockRollingBuffer
         from compass.audio.stt import MockSTT
         coach = _build_coach(cfg)
-        buffer = MockRollingBuffer()
+        buffer = _build_audio_buffer(cfg)
         stt = MockSTT()
         run_retro(glasses, buffer, stt, coach, memory)
     else:
