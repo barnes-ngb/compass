@@ -59,6 +59,25 @@ def test_laptop_mic_buffer_satisfies_protocol_if_installed() -> None:
     assert isinstance(buf, RollingBuffer)
 
 
+def test_whisper_stt_satisfies_protocol_if_installed() -> None:
+    """WhisperSTT must satisfy STT when faster-whisper is available.
+
+    Skipped if faster-whisper isn't installed. Does NOT actually run inference
+    (model download would dominate test time).
+    """
+    try:
+        from compass.audio.whisper_stt import WhisperSTT  # noqa: F401
+    except ImportError:
+        pytest.skip("faster-whisper not installed; WhisperSTT unavailable")
+
+    # We don't instantiate (would download the model). Just check the class
+    # has the right shape for STT Protocol by inspecting the method signature.
+    import inspect
+    sig = inspect.signature(WhisperSTT.transcribe)
+    assert "audio_bytes" in sig.parameters
+    assert sig.return_annotation in (str, "str")
+
+
 def test_mock_audio_roundtrip() -> None:
     """Buffer + STT round-trip: canned transcript → bytes → STT → original string."""
     buf = MockRollingBuffer(canned_transcript="hello compass")
