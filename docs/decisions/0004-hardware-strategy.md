@@ -64,3 +64,8 @@ By Q3 2026 (post-Meta-Connect, Sept 23–24), at least one of these may be a via
 | Meta opens Ray-Ban Display past developer preview with raised tester cap | Build a Swift/Kotlin bridge; consider as the consumer hero. |
 | A Zahner pilot crystallizes with a real customer | Buy M400 for that engagement specifically. |
 | Mentra Display ships | Add as the open-source HUD primary. |
+
+## Postscript: 2026-05-20 — superseded for current decision by ADR 0008
+
+The decision tree in this ADR (Phase 1 used Frame → Phase 2 Vuzix M400 → Phase 3 re-evaluate Halo/Meta) is no longer the active hardware strategy. On 2026-05-20, Halo was ordered as the Phase 1 primary device, with used Frame as a backup acquisition. See ADR 0008 (`docs/decisions/0008-hardware-path.md`) for the current decision. The reasoning and survey in this ADR's body are preserved as historical context.
+
