@@ -78,6 +78,23 @@ def test_whisper_stt_satisfies_protocol_if_installed() -> None:
     assert sig.return_annotation in (str, "str")
 
 
+def test_whisper_stt_accepts_model_name_param() -> None:
+    """WhisperSTT accepts a model_name parameter and defaults to small.en.
+
+    Does NOT instantiate (would download the model). Just checks signature.
+    """
+    try:
+        from compass.audio.whisper_stt import WhisperSTT  # noqa: F401
+    except ImportError:
+        import pytest
+        pytest.skip("faster-whisper not installed; WhisperSTT unavailable")
+
+    import inspect
+    sig = inspect.signature(WhisperSTT.__init__)
+    assert "model_name" in sig.parameters
+    assert sig.parameters["model_name"].default == "small.en"
+
+
 def test_mock_audio_roundtrip() -> None:
     """Buffer + STT round-trip: canned transcript → bytes → STT → original string."""
     buf = MockRollingBuffer(canned_transcript="hello compass")

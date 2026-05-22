@@ -176,6 +176,7 @@ Either way, every change is one branch, one PR, reviewed before merge.
 | Venv activation blocked | `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` (no admin needed) |
 | Webcam black frame | Close Teams/Zoom/OBS; or set `CAMERA_INDEX=1` |
 | `anthropic.AuthenticationError` | Check `ANTHROPIC_API_KEY` starts with `sk-ant-` |
+| Whisper mistranscribes shop vocabulary | Default is `small.en`; if speed matters more than accuracy, set `WHISPER_MODEL=base.en`. For better accuracy still, see ADR 0006 about cloud STT options. |
 | Tkinter window doesn't show | Reinstall Python with tcl/tk checked |
 
 ---
