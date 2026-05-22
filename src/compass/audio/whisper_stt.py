@@ -1,8 +1,14 @@
 """Local STT using faster-whisper.
 
-Default model: 'base.en'. ~75MB, English-only, runs on CPU in 1-3 seconds
-for a 5-minute audio snapshot on a modern laptop. The model downloads once
-and caches to disk at faster-whisper's default cache location.
+Default model: 'small.en' (~244 MB, English-only). On a modern laptop CPU,
+transcribing a 5-minute audio snapshot takes roughly 10-20 seconds. The
+model downloads once on first instantiation and caches to disk at
+faster-whisper's default cache location.
+
+base.en (~75 MB) is faster (~1-3s for 5 min of audio) but routinely
+mistranscribes domain vocabulary like "facade panels" -> "sign tables".
+Override with WHISPER_MODEL=base.en if speed matters more than accuracy
+for your use case.
 """
 
 from __future__ import annotations
@@ -17,13 +23,13 @@ import numpy as np
 class WhisperSTT:
     """Local STT via faster-whisper.
 
-    The first instantiation downloads the model (~75MB for base.en).
+    The first instantiation downloads the model (~244 MB for small.en).
     Subsequent runs load from cache.
 
     Parameters
     ----------
     model_name : str
-        faster-whisper model name. Default 'base.en'.
+        faster-whisper model name. Default 'small.en'.
     device : str
         'cpu' (default) or 'cuda'. CPU is fine for laptop use.
     compute_type : str
@@ -32,7 +38,7 @@ class WhisperSTT:
 
     def __init__(
         self,
-        model_name: str = "base.en",
+        model_name: str = "small.en",
         device: str = "cpu",
         compute_type: str = "int8",
     ) -> None:

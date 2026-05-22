@@ -69,7 +69,8 @@ def _build_stt(cfg: Config) -> STT:
                 "STT_PROVIDER=whisper requires the audio extra. "
                 'Install with: pip install -e ".[audio]"'
             ) from exc
-        return WhisperSTT()
+        model_name = os.environ.get("WHISPER_MODEL", "small.en").strip()
+        return WhisperSTT(model_name=model_name)
     raise SystemExit(f"Unknown STT_PROVIDER={kind!r}. Use 'mock' or 'whisper'.")
 
 
