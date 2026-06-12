@@ -69,3 +69,12 @@ When any of these fires, this ADR gets a postscript or a successor ADR — not a
 - ADR 0005 (Coach modes) — what hardware needs to support
 - `docs/landscape.md` — full landscape survey
 - `docs/inspection/2026-05-20-sibling-repos.md` — directive-engine as the consumption target
+
+## Postscript: 2026-06-12 — Halo SDK published and PCBs in production
+
+Two material updates since this ADR was written:
+
+1. Brilliant Labs published the Halo SDK at https://docs.brilliant.xyz/halo/halo-sdk/ (was previously a stub). A `brilliant-msg` Python package (BSD license, Windows-supported, Python 3.10+) is on PyPI; example code is in https://github.com/brilliantlabsAR/brilliant_sdk. SDK evaluation: see the deep-research artifact in the project context.
+2. Brilliant notified pre-order #912503 on 2026-06-12 that PCBs are made. Foxconn QA the week of 2026-06-15; production kick-off the week of June 21 or 28. Realistic delivery still trends late Q3 / Q4 2026 (PCB-ready to customer delivery historically takes Brilliant 2–4 months), but the schedule is no longer hypothetical.
+
+Decision unchanged: Halo remains primary, Frame remains the backup acquisition. ADR 0009 documents the *implementation strategy* (Python host + minimal Lua + phone deferred) now that the SDK is concrete enough to commit to.

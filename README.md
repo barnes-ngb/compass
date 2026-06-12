@@ -49,6 +49,7 @@ Pull-default — compass speaks when invoked, not when it feels like it. Persist
 | `docs/decisions/0006-memory-layers.md` | Layered lossy memory pipeline + tap-to-tap V0 session model |
 | `docs/decisions/0007-thesis-and-name.md` | Why "compass," and the thesis sentence |
 | `docs/decisions/0008-hardware-path.md`     | Halo primary, Frame backup, no committed fallback — current hardware decision |
+| `docs/decisions/0009-halo-language-strategy.md` | Python host + minimal Lua, phone deferred — current implementation strategy |
 | `web/compass.md` | Draft Astro page for the portfolio site |
 
 ---
