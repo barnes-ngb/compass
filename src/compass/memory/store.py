@@ -12,10 +12,10 @@ The layered memory pipeline (see docs/decisions/0006-memory-layers.md):
                        ↓ rolled up over time
                 Project memory (recurring threads, your stated goals)
 
-Phase 0 implements the lowest persistence layer: per-event log. That's enough
-to start populating, and the rollup layers (session summary, daily digest)
-will be added in Phase 2 once verbal/retro modes are wired and there's
-actually transcript data to summarize.
+Phase 0 implemented the lowest persistence layer: per-event log. Phase 1b
+wires the session layer (run-as-session: one program run is one session,
+summarized on exit). The daily digest rollup is Phase 1c. Embeddings and
+project memory are Phase 3.
 
 Design choices:
   - SQLite, single file at MEMORY_DB. No server, no ops. Easy backup.
@@ -108,7 +108,7 @@ class MemoryStore:
             ).fetchall()
             return [dict(r) for r in rows]
 
-    # ---- sessions (Phase 2 — V0 tap-to-tap) --------------------------------
+    # ---- sessions (Phase 1b — V0 run-as-session) ---------------------------
 
     def start_session(self, label: str = "") -> int:
         with closing(sqlite3.connect(self._path)) as conn:
@@ -132,3 +132,20 @@ class MemoryStore:
                 (time.time(), transcript, summary, session_id),
             )
             conn.commit()
+
+    def events_for_session(self, session_id: int) -> list[dict]:
+        with closing(sqlite3.connect(self._path)) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM events WHERE session_id = ? ORDER BY ts ASC",
+                (session_id,),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def get_session(self, session_id: int) -> dict | None:
+        with closing(sqlite3.connect(self._path)) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT * FROM sessions WHERE id = ?", (session_id,)
+            ).fetchone()
+            return dict(row) if row else None

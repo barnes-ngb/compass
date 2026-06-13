@@ -239,6 +239,40 @@ def test_run_verbal_loops_once_and_logs() -> None:
     assert events[0]["response"]  # non-empty
 
 
+def test_run_verbal_creates_and_finalizes_session() -> None:
+    """One verbal run opens a session, logs an event under it, and finalizes
+    the session with a transcript and a coach summary on exit."""
+    import tempfile
+    from compass.memory.store import MemoryStore
+    from compass.audio.buffer import MockRollingBuffer
+    from compass.audio.stt import MockSTT
+    from compass.coach.mock import MockCoach
+    from compass.pipeline import run_verbal
+
+    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
+        db_path = tmp.name
+    memory = MemoryStore(db_path=db_path)
+
+    glasses = _TestGlasses()
+    buffer = MockRollingBuffer(canned_transcript="how should I detail this parapet")
+    stt = MockSTT()
+    coach = MockCoach()
+
+    run_verbal(glasses, buffer, stt, coach, memory, listen_seconds=0.0)
+
+    events = memory.recent_events(limit=5)
+    assert len(events) == 1
+    session_id = events[0]["session_id"]
+    assert session_id is not None  # event is tied to a session
+
+    session = memory.get_session(session_id)
+    assert session is not None
+    assert session["ended_ts"] is not None      # finalized on exit
+    assert session["label"] == "verbal"
+    assert session["transcript"]                 # assembled from events
+    assert session["summary"]                    # coach summary (MockCoach 'summar' branch)
+
+
 def test_memory_session_lifecycle() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         db = Path(tmp) / "test.sqlite"
