@@ -12,4 +12,6 @@ class MockCoach:
             return "decided 16-ga steel, install Tuesday"
         if "decide" in i or "decis" in i:
             return "16-gauge weathering steel, Mon delivery"
+        if "request" in i or "spoken" in i:
+            return "check the load path before you commit"
         return "intent unclear"

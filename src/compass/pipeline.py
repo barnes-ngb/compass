@@ -4,9 +4,10 @@ All three modes share the Glasses + memory infrastructure. They diverge in
 where the input comes from (camera / mic-now / mic-buffer) and which provider
 handles the inference (vision vs coach).
 
-Phase 0 status: visual mode runs end-to-end against the mock glasses. Retro
-mode runs end-to-end against the mock audio buffer + mock STT. Verbal mode
-is still scaffolded and raises NotImplementedError.
+Status: visual, verbal, and retro all run end-to-end against mock or laptop
+implementations. Verbal records a fixed listen window on trigger; retro
+snapshots the rolling buffer; visual captures a frame. All three share the
+Glasses + memory infrastructure.
 """
 
 from __future__ import annotations
@@ -61,15 +62,60 @@ def run_visual(
 
 def run_verbal(
     glasses: Glasses,
-    coach: CoachProvider,  # noqa: ARG001 — Phase 2 stub
-    memory: MemoryStore,  # noqa: ARG001
+    buffer: RollingBuffer,
+    stt: STT,
+    coach: CoachProvider,
+    memory: MemoryStore,
+    intent: str = "respond to the user's spoken request",
+    listen_seconds: float = 6.0,
 ) -> None:
-    """Voice trigger → STT → coach → HUD. Phase 2."""
-    raise NotImplementedError(
-        "Verbal mode is a Phase 2 stub. Needs the audio capture layer "
-        "(sounddevice) and STT (faster-whisper) wired in. "
-        "See docs/decisions/0005-coach-modes.md and docs/roadmap.md."
-    )
+    """Trigger -> record a short utterance -> STT -> coach -> HUD.
+
+    Verbal mode is capture-on-demand: the user triggers, then speaks. A fixed
+    listen window (`listen_seconds`) records the utterance from the rolling
+    buffer; the transcript is passed to the coach. V0 uses a fixed window;
+    silence detection is a V1 concern (docs/roadmap.md Phase 3). Audio stays
+    in RAM and is never persisted (ADR 0006).
+    """
+    glasses.connect()
+    buffer.start()
+    try:
+        glasses.show_text("Compass ready", "SPACE = ask", color="cloudblue")
+        while True:
+            if not glasses.wait_for_trigger():
+                break
+            glasses.show_text("Listening...", "speak now", color="yellow")
+            if listen_seconds > 0:
+                time.sleep(listen_seconds)
+
+            glasses.show_text("Thinking...", color="yellow")
+            t0 = time.perf_counter()
+            try:
+                audio = buffer.snapshot(seconds=listen_seconds)
+                transcript = stt.transcribe(audio)
+                memory_context = ""  # Phase 3 will populate from recent sessions
+                answer = coach.respond(intent, transcript, memory_context)
+            except Exception as exc:  # noqa: BLE001
+                glasses.show_text("Verbal error", str(exc)[:32], color="red")
+                continue
+            dt = time.perf_counter() - t0
+
+            if not answer:
+                glasses.show_text("(no answer)", color="grey")
+                continue
+
+            line1, line2 = _two_lines(answer, max1=28, max2=32)
+            glasses.show_text(line1, line2 or f"{dt:.1f}s", color="green")
+
+            memory.log_event(
+                mode="verbal",
+                query=transcript,
+                response=answer,
+                duration_s=dt,
+            )
+    finally:
+        buffer.close()
+        glasses.close()
 
 
 def run_retro(

@@ -113,7 +113,9 @@ def main() -> None:
         run_visual(glasses, vision, memory, prompt=cfg.vision_prompt)
     elif mode == "verbal":
         coach = _build_coach(cfg)
-        run_verbal(glasses, coach, memory)
+        buffer = _build_audio_buffer(cfg)
+        stt = _build_stt(cfg)
+        run_verbal(glasses, buffer, stt, coach, memory)
     elif mode == "retro":
         coach = _build_coach(cfg)
         buffer = _build_audio_buffer(cfg)

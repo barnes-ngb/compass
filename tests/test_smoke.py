@@ -212,6 +212,33 @@ def test_run_retro_loops_once_and_logs() -> None:
     assert events[0]["response"]  # non-empty
 
 
+def test_run_verbal_loops_once_and_logs() -> None:
+    """Verbal mode: one synthetic trigger -> record -> STT -> coach -> memory logged."""
+    import tempfile
+    from compass.memory.store import MemoryStore
+    from compass.audio.buffer import MockRollingBuffer
+    from compass.audio.stt import MockSTT
+    from compass.coach.mock import MockCoach
+    from compass.pipeline import run_verbal
+
+    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
+        db_path = tmp.name
+    memory = MemoryStore(db_path=db_path)
+
+    glasses = _TestGlasses()
+    buffer = MockRollingBuffer(canned_transcript="how should I detail this parapet")
+    stt = MockSTT()
+    coach = MockCoach()
+
+    # listen_seconds=0.0 so the test does not actually sleep.
+    run_verbal(glasses, buffer, stt, coach, memory, listen_seconds=0.0)
+
+    events = memory.recent_events(limit=5)
+    assert len(events) == 1
+    assert events[0]["mode"] == "verbal"
+    assert events[0]["response"]  # non-empty
+
+
 def test_memory_session_lifecycle() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         db = Path(tmp) / "test.sqlite"
