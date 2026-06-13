@@ -27,9 +27,9 @@ tap → camera capture → VisionProvider.describe(image, prompt) → HUD
 
 Sibling to scan-to-action. The user points at something, asks a quick question, and gets a glance-sized answer in their right eye. Every event is logged to memory so it's queryable later.
 
-Latency budget: 1.5–3 s for cloud VLM (Claude Sonnet 4.6). 0 s for `MockVision`.
+Latency budget: on laptop the cloud VLM call (Claude Sonnet 4.6) dominates at ~1.5–3 s. End-to-end on Halo glasses budgets to ~5–10 s per ADR 0009, once BLE trigger, JPEG capture, and HUD render are counted. 0 s for `MockVision`.
 
-### Verbal (Phase 2 — stub)
+### Verbal (Phase 1 — wiring next; code still a stub)
 
 ```
 voice trigger → STT(now) → CoachProvider.respond(query, transcript="") → HUD
@@ -37,9 +37,9 @@ voice trigger → STT(now) → CoachProvider.respond(query, transcript="") → H
 
 "Hey compass, what does ASTM A606 mean?" The verbal mode is essentially Visual without the image — it goes through the coach (text-only) rather than vision (image+text). Memory context can be retrieved to ground the answer in your projects.
 
-Latency budget: 0.5–1.5 s (STT) + 0.5–1.5 s (coach) = 1–3 s total.
+Latency budget: short-utterance STT plus coach call runs a few seconds on laptop. Roadmap Phase 1a targets ≤ 10 s press-to-HUD on laptop; glasses adds BLE trigger and render on top. Measure and record actuals when wired.
 
-### Retro (Phase 2 — stub)
+### Retro (Phase 1 — works on laptop)
 
 ```
 button-press → RollingBuffer.snapshot(last_N_min) → STT → CoachProvider.respond(intent, transcript) → HUD
@@ -47,12 +47,12 @@ button-press → RollingBuffer.snapshot(last_N_min) → STT → CoachProvider.re
 
 The killer mode. The rolling audio buffer is always armed during a session (RAM-only, never persisted). On button-press, the last N minutes are transcribed and fed to the coach with current memory context. The coach returns a short HUD directive: *"they asked about Q3 panel schedule"* or *"decided 16-ga weathering steel."*
 
-Latency budget: 2–4 s (STT of a 5-min buffer is the long pole on local Whisper; cloud STT cuts this to ~1 s).
+Latency budget: measured 12–22 s press-to-HUD on laptop (2026-05-20), matching ADR 0009's retro budget. STT of the buffer on local Whisper is the long pole; cloud STT would cut it substantially.
 
 ## Layered memory pipeline
 
 ```
-Live audio        (in-glasses mic or phone mic, Phase 2)
+Live audio        (laptop mic now; in-glasses mic Phase 2; phone mic deferred, ADR 0009 §5)
     │
     ▼
 Rolling buffer    (RAM only, NEVER persisted, 30-min default window)
@@ -70,27 +70,27 @@ Daily digest           (text, persisted to memory.daily_digests)
 Project memory         (recurring threads, your stated goals — Phase 3)
 ```
 
-Each layer is cheap to build (a prompt + a storage row), and each is independently useful. Phase 0 implements `events` (the lowest persistent layer). Sessions, summaries, and digests come online with Phase 2.
+Each layer is cheap to build (a prompt + a storage row), and each is independently useful. Phase 0 implements `events` (the lowest persistent layer). Sessions, summaries, and digests come online in Phase 1.
 
 **Retention policy**: raw audio bytes are discarded immediately after STT. Transcripts and summaries are retained indefinitely (it's your data, on your machine). Compass never records continuously — the rolling buffer only runs during an explicit session.
 
 ## Latency budget for a "glanceable" interaction
 
-The whole loop must feel like checking your watch. Total ≤ 2.5 s desktop / ≤ 3 s on Frame.
+The whole loop must feel like checking your watch. The canonical end-to-end budget lives in ADR 0009: visual ~5–10 s, retro ~12–22 s, on Halo glasses. The table below is the idealized per-stage breakdown for visual mode; real glasses runs higher because BLE trigger and capture add overhead the table understates.
 
 | Stage | Mock | Real (cloud Sonnet 4.6) |
 |---|---|---|
-| Capture | 30 ms (cv2.read + imencode) | 200–400 ms (BLE JPEG @ Frame) |
+| Capture | 30 ms (cv2.read + imencode) | 200–400 ms (BLE JPEG @ Halo, estimated) |
 | Network upload | 0 | 100–400 ms |
 | Model inference | 0 | 800–1500 ms |
 | Render to HUD | 5 ms (cv2.imshow) | 100 ms (BLE) |
 | **Total** | **~50 ms** | **~1.5–2.5 s** |
 
-Stays within the "glance" budget. If we ever miss, the bottleneck is almost always the VLM, not the transport.
+The idealized stage sum lands near 2 s. Real end-to-end on glasses runs to ADR 0009's ~5–10 s once BLE trigger and capture are counted. The VLM call is still the largest single stage, but transport on glasses is no longer negligible.
 
 ## Why a Protocol, not an ABC
 
-Mock and real drivers don't need to share an ancestor. Third-party drivers (community Frame SDK, future Halo SDK, Mentra TypeScript bridge) can be dropped in via duck-typing. The `@runtime_checkable` decorator means `isinstance(x, Glasses)` still works.
+Mock and real drivers don't need to share an ancestor. Third-party drivers (community Frame SDK, the published Halo SDK, Mentra TypeScript bridge) can be dropped in via duck-typing. The `@runtime_checkable` decorator means `isinstance(x, Glasses)` still works.
 
 ## Why mode dispatch in `cli.py` instead of a "mode" object
 
