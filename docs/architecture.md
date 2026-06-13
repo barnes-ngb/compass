@@ -10,12 +10,12 @@ A glance-paced AI coach with persistent layered memory. Hardware-abstracted. Thr
 |---|---|
 | `compass.cli` | Parse `--mode`, load config, build providers, dispatch to a `run_*` function |
 | `compass.config` | Single dataclass loaded from `.env`. No env-fiddling anywhere else |
-| `compass.pipeline` | Three top-level orchestrators: `run_visual`, `run_verbal`, `run_retro`. Phase 0 implements visual; verbal and retro raise `NotImplementedError` |
-| `compass.glasses` | Hardware abstraction. `Glasses` Protocol: `connect / wait_for_trigger / capture_image / show_text / close`. Drivers: `MockGlasses` (webcam + cv2 HUD), `FrameGlasses` (Phase 1 stub) |
+| `compass.pipeline` | Three top-level orchestrators: `run_visual`, `run_verbal`, `run_retro`. Phase 0 shipped visual; `run_retro` works on laptop (Phase 1); `run_verbal` raises `NotImplementedError`, wiring next (Phase 1a) |
+| `compass.glasses` | Hardware abstraction. `Glasses` Protocol: `connect / wait_for_trigger / capture_image / show_text / close`. Drivers: `MockGlasses` (webcam + cv2 HUD), `FrameGlasses` (backup-hardware stub). Halo is primary; its driver lands in Phase 2 (ADR 0008, ADR 0009) |
 | `compass.vision` | Image → directive. `VisionProvider.describe(bytes, prompt) -> str`. Implementations: `ClaudeVision`, `MockVision`, `GeminiVision` (stub) |
 | `compass.coach` | Transcript + memory + intent → directive. `CoachProvider.respond(intent, transcript, memory_context) -> str`. Implementations: `ClaudeCoach`, `MockCoach` |
-| `compass.audio` | Rolling audio buffer + STT. `RollingBuffer` and `STT` protocols. Phase 2 stubs |
-| `compass.memory` | SQLite-backed layered memory. Tables: `events`, `sessions`, `daily_digests`. Rollup logic is Phase 2 |
+| `compass.audio` | Rolling audio buffer + STT. `RollingBuffer` and `STT` protocols. Implementations: `LaptopMicBuffer` (sounddevice ring buffer), `WhisperSTT` (faster-whisper, default `small.en`), plus mocks. Shipped Phase 1 |
+| `compass.memory` | SQLite-backed layered memory. Tables: `events`, `sessions`, `daily_digests`. `events` shipped Phase 0; session and digest rollup is Phase 1c, not yet built |
 
 ## The three modes
 
