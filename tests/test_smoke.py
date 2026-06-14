@@ -282,3 +282,34 @@ def test_memory_session_lifecycle() -> None:
         assert sid > 0
         m.end_session(sid, transcript="...", summary="decided 16-ga steel")
         # End-session should not raise; presence is verified via no exception.
+
+
+def test_digest_rolls_up_day_sessions() -> None:
+    """Two summarized sessions on a day roll up into one non-empty digest row."""
+    import tempfile
+    from datetime import date
+    from compass.memory.store import MemoryStore
+    from compass.coach.mock import MockCoach
+    from compass.digest import build_digest
+
+    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
+        db_path = tmp.name
+    memory = MemoryStore(db_path=db_path)
+
+    s1 = memory.start_session(label="verbal")
+    memory.end_session(s1, transcript="t1", summary="decided 16-ga steel")
+    s2 = memory.start_session(label="retro")
+    memory.end_session(s2, transcript="t2", summary="install Tuesday")
+
+    day_iso = date.today().isoformat()
+    digest = build_digest(memory, MockCoach(), day_iso)
+
+    assert digest  # non-empty
+    stored = memory.get_digest(day_iso)
+    assert stored is not None
+    assert stored["digest"]              # persisted
+    assert stored["day_iso"] == day_iso
+
+    # Idempotent re-roll: running again overwrites, does not duplicate.
+    build_digest(memory, MockCoach(), day_iso)
+    assert memory.get_digest(day_iso) is not None
