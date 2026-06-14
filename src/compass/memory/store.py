@@ -31,6 +31,7 @@ from __future__ import annotations
 import sqlite3
 import time
 from contextlib import closing
+from datetime import datetime, timedelta
 from pathlib import Path
 
 SCHEMA = """
@@ -147,5 +148,38 @@ class MemoryStore:
             conn.row_factory = sqlite3.Row
             row = conn.execute(
                 "SELECT * FROM sessions WHERE id = ?", (session_id,)
+            ).fetchone()
+            return dict(row) if row else None
+
+    # ---- daily digest (Phase 1c) -------------------------------------------
+
+    def sessions_for_day(self, day_iso: str) -> list[dict]:
+        """Sessions whose start falls within the local day `day_iso` (YYYY-MM-DD)."""
+        day = datetime.strptime(day_iso, "%Y-%m-%d")
+        start_ts = day.timestamp()
+        end_ts = (day + timedelta(days=1)).timestamp()
+        with closing(sqlite3.connect(self._path)) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM sessions WHERE started_ts >= ? AND started_ts < ? "
+                "ORDER BY started_ts ASC",
+                (start_ts, end_ts),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def upsert_digest(self, day_iso: str, digest: str) -> None:
+        with closing(sqlite3.connect(self._path)) as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO daily_digests (day_iso, digest, created_ts) "
+                "VALUES (?, ?, ?)",
+                (day_iso, digest, time.time()),
+            )
+            conn.commit()
+
+    def get_digest(self, day_iso: str) -> dict | None:
+        with closing(sqlite3.connect(self._path)) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT * FROM daily_digests WHERE day_iso = ?", (day_iso,)
             ).fetchone()
             return dict(row) if row else None
