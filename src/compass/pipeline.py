@@ -30,6 +30,7 @@ def run_visual(
 ) -> None:
     """Capture → VLM → HUD. The original glance-to-directive loop."""
     glasses.connect()
+    session_id = memory.start_session(label="visual")
     try:
         glasses.show_text("Compass ready", "SPACE = capture", color="cloudblue")
         while True:
@@ -55,8 +56,15 @@ def run_visual(
             glasses.show_text(line1, line2 or f"{dt:.1f}s", color="green")
 
             # Memory: log every visual query so they're queryable later.
-            memory.log_event(mode="visual", query=prompt, response=answer, duration_s=dt)
+            memory.log_event(
+                mode="visual",
+                query=prompt,
+                response=answer,
+                duration_s=dt,
+                session_id=session_id,
+            )
     finally:
+        _finalize_session(memory, session_id)
         glasses.close()
 
 
@@ -78,6 +86,7 @@ def run_verbal(
     in RAM and is never persisted (ADR 0006).
     """
     glasses.connect()
+    session_id = memory.start_session(label="verbal")
     buffer.start()
     try:
         glasses.show_text("Compass ready", "SPACE = ask", color="cloudblue")
@@ -112,8 +121,10 @@ def run_verbal(
                 query=transcript,
                 response=answer,
                 duration_s=dt,
+                session_id=session_id,
             )
     finally:
+        _finalize_session(memory, session_id, coach)
         buffer.close()
         glasses.close()
 
@@ -135,6 +146,7 @@ def run_retro(
     HUD directive.
     """
     glasses.connect()
+    session_id = memory.start_session(label="retro")
     buffer.start()
     try:
         glasses.show_text("Compass ready", "SPACE = ask retro", color="cloudblue")
@@ -166,13 +178,45 @@ def run_retro(
                 query=intent,
                 response=answer,
                 duration_s=dt,
+                session_id=session_id,
             )
     finally:
+        _finalize_session(memory, session_id, coach)
         buffer.close()
         glasses.close()
 
 
 # ---- helpers ----------------------------------------------------------------
+
+
+def _finalize_session(
+    memory: MemoryStore,
+    session_id: int,
+    coach: CoachProvider | None = None,
+) -> None:
+    """Assemble the session transcript from its events and persist a summary.
+
+    Called once per run, on loop exit. V0 has no continuous STT; the event log
+    is the record, so the transcript is built from the session's events. If a
+    coach is provided, it produces the summary via the same respond() interface
+    used for live directives (ADR 0006: one interface, different payload).
+    Visual sessions carry no coach and store the transcript only. A failure
+    here never masks the real shutdown path.
+    """
+    try:
+        events = memory.events_for_session(session_id)
+        transcript = "\n".join(
+            f"Q: {e['query']}\nA: {e['response']}" for e in events
+        )
+        summary = ""
+        if coach is not None and transcript:
+            summary = coach.respond("summarize this session", transcript, "")
+        memory.end_session(session_id, transcript=transcript, summary=summary)
+    except Exception:  # noqa: BLE001 — shutdown must not crash on a summary failure
+        try:
+            memory.end_session(session_id)
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def _two_lines(text: str, max1: int, max2: int) -> tuple[str, str]:
