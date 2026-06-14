@@ -84,3 +84,11 @@ The rolling buffer is RAM-only. The only persistent artifact from audio is text,
 | Compass used in ≥ 5 real sessions over 2 weeks | Audit: did we remember to tap "end"? What did the misses look like? |
 | Sessions average > 90 min because of forgotten end-tap | Add silence-based auto-end as first heuristic. |
 | Memory store > 100 MB | Add archive-and-prune tooling. |
+
+## Postscript: 2026-06-12 — V0 implemented as run-as-session
+
+The V0 session model above specifies "tap to tap: user starts and ends every session explicitly." Phase 1b implemented that explicit boundary as run-as-session: one `python -m compass` run is one session. `start_session` fires after the glasses connect, every event in the run carries that `session_id`, and on loop exit the transcript is assembled from the run's events and a summary is written. Verbal and retro summarize through the coach; visual stores the transcript without an LLM summary, since a batch of one-shot image lookups does not compress usefully in V0.
+
+Why program lifetime rather than an in-loop session key: the `Glasses` trigger returns a bare bool, trigger versus quit, with no room for a third "toggle session" signal. An in-loop key would have forced a change to the `Glasses` Protocol, which the rest of the system deliberately keeps narrow. Program launch and quit are already explicit, user-controlled acts, so they satisfy the V0 principle without new Protocol surface.
+
+This does not change the V0 to V1 to V2 progression or the advancement triggers above. Once run-as-session produces real data on how long runs last and how often a run is left open, silence-based auto-end becomes the first V1 heuristic. The V0 transcript is assembled from the event log; continuous-STT session transcripts remain a later concern tied to the always-armed V2 model.
