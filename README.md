@@ -28,7 +28,7 @@ Pull-default — compass speaks when invoked, not when it feels like it. Persist
 
 - ✅ Phase 0: project scaffold, mock visual pipeline, three-mode architecture
 - ⏳ Phase 1: real hardware integration (see `docs/landscape.md`)
-- ⏳ Phase 2: verbal + retro modes wired to real STT and layered memory
+- 🟡 Phase 2: retro and verbal modes wired end-to-end (real mic + local Whisper STT + Claude coach); memory rollup layers pending
 - ⏳ Phase 3: domain-specific coach personas (fabrication, knowledge, life)
 
 ---
@@ -85,7 +85,8 @@ pip install -r requirements.txt
 # 5. Install compass itself (editable). This is what makes `python -m compass` resolve.
 pip install -e .
 
-# To enable real audio capture for retro mode (Phase 2): pip install -e ".[audio]"
+# To enable real audio capture for verbal + retro modes: pip install -e ".[audio]"
+# For development (tests + lint + real audio): pip install -e ".[dev,audio]"
 
 # 6. Config
 Copy-Item .env.example .env
@@ -106,14 +107,27 @@ python -m compass --mode visual
 
 Two windows open: webcam preview + simulated HUD. SPACE captures, ESC quits.
 
-**Verbal and retro modes (Phase 2 — stubs only):**
+**Retro mode (Phase 2 — works today):**
 
 ```powershell
-python -m compass --mode verbal    # raises NotImplementedError
-python -m compass --mode retro     # raises NotImplementedError
+# In .env (or per-session): AUDIO_BUFFER=laptop and STT_PROVIDER=whisper
+python -m compass --mode retro
 ```
 
-These will light up once we wire STT and the rolling audio buffer.
+The HUD simulator opens; the rolling mic buffer runs in RAM. SPACE transcribes
+the last 5 minutes and asks the coach; ESC quits. The audio defaults
+(`AUDIO_BUFFER=mock`, `STT_PROVIDER=mock`) use canned audio; add
+`COACH_PROVIDER=mock` to run fully offline with no API calls. First whisper run
+downloads the `small.en` model (~244 MB, cached thereafter).
+
+**Verbal mode (Phase 2 — works today):**
+
+```powershell
+python -m compass --mode verbal
+```
+
+Same `AUDIO_BUFFER` / `STT_PROVIDER` settings as retro. SPACE opens a fixed
+6-second listen window; the utterance is transcribed and answered by the coach.
 
 **Fully offline:** set `VISION_PROVIDER=mock` in `.env` — no API calls, canned responses.
 
@@ -140,9 +154,11 @@ src/compass/
 │   ├── base.py           CoachProvider Protocol
 │   ├── claude.py         Anthropic Claude
 │   └── mock.py           Canned coach responses
-├── audio/                Capture and STT for retro mode
-│   ├── buffer.py         Rolling buffer (interface only, no capture yet)
-│   └── stt.py            Whisper STT (interface only, no inference yet)
+├── audio/                Capture and STT for verbal + retro modes
+│   ├── buffer.py         RollingBuffer Protocol + Null/Mock implementations
+│   ├── laptop_mic.py     Real capture — sounddevice + numpy ring buffer (RAM only)
+│   ├── stt.py            STT Protocol + Null/Mock implementations
+│   └── whisper_stt.py    Real local STT — faster-whisper, default small.en
 └── memory/               Layered memory store
     └── store.py          SQLite-backed; sessions, summaries, digests
 ```

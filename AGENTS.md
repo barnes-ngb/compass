@@ -11,6 +11,12 @@ Conventions for agents (Claude Code, future Claude conversations, anything autom
 - **Cite paths.** When making a claim about the code, reference the file and line. E.g., "the protocol at `src/compass/glasses/base.py:23`."
 - **Verify, don't trust.** Run `pytest` and report results in the PR body. Do not assume tests pass.
 - **Constraints are hard.** "Do NOT modify X" means do not modify X, even if you have a good reason. If you find a real conflict between the prompt and reality, stop and surface it; don't work around.
+- **Run tests as `python -m pytest`, never bare `pytest`.** On Windows, a
+  user-global pytest can shadow the venv's and silently run against the wrong
+  Python (discovered 2026-05-20: global 3.12 pytest skipped audio tests that
+  the venv's 3.13 install passed).
+- **Dev setup is `pip install -e ".[dev,audio]"`.** The plain install has no
+  pytest; the dev extra alone has no sounddevice/faster-whisper.
 
 ## Project conventions
 
