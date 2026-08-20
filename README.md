@@ -115,8 +115,9 @@ python -m compass --mode retro
 ```
 
 The HUD simulator opens; the rolling mic buffer runs in RAM. SPACE transcribes
-the last 5 minutes and asks the coach; ESC quits. Defaults (`AUDIO_BUFFER=mock`,
-`STT_PROVIDER=mock`) run fully offline with canned audio. First whisper run
+the last 5 minutes and asks the coach; ESC quits. The audio defaults
+(`AUDIO_BUFFER=mock`, `STT_PROVIDER=mock`) use canned audio; add
+`COACH_PROVIDER=mock` to run fully offline with no API calls. First whisper run
 downloads the `small.en` model (~244 MB, cached thereafter).
 
 **Verbal mode (Phase 2 — works today):**
