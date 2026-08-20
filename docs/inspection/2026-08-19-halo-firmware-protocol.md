@@ -3,6 +3,7 @@
 Date: 2026-08-19
 Scope: read-only audit of https://github.com/brilliantlabsAR/halo-firmware host-app protocol docs, mapped against compass's `Glasses` Protocol (`src/compass/glasses/base.py`) and ADR 0008/0009.
 Method: fetched raw doc files (`applications/halo/PROTOCOL.md`, `BLE_SERVICES.md`, `LUA_RUNTIME.md`, `BUTTON_LED_GUIDE.md`, `PM_SLEEP.md`, `FLASHING.md`, `PAIRING.md`, `README.md`) plus the `samples/halo/` listing. No cloning; nothing vendored.
+Upstream revision audited: halo-firmware `main` @ commit `9a306ae7072d84a94f377e1b857d47d30ddaf014` (every fetched file byte-verified against that SHA). All file/section citations below refer to that revision.
 
 ---
 
