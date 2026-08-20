@@ -20,10 +20,20 @@ def _build_glasses(cfg: Config) -> Glasses:
     if cfg.glasses == "mock":
         from compass.glasses.mock import MockGlasses
         return MockGlasses(camera_index=cfg.camera_index)
+    if cfg.glasses == "halo":
+        import importlib.util
+        if importlib.util.find_spec("brilliant_msg") is None:
+            raise SystemExit(
+                "GLASSES=halo requires Halo hardware and its SDK. "
+                "Install with: pip install brilliant-msg — deliberately NOT in "
+                "the project extras until hardware arrives (ADR 0009)."
+            )
+        from compass.glasses.halo import HaloGlasses
+        return HaloGlasses()
     if cfg.glasses == "frame":
         from compass.glasses.frame import FrameGlasses
         return FrameGlasses()
-    raise SystemExit(f"Unknown GLASSES={cfg.glasses!r}. Use 'mock' or 'frame'.")
+    raise SystemExit(f"Unknown GLASSES={cfg.glasses!r}. Use 'mock', 'halo', or 'frame'.")
 
 
 def _build_vision(cfg: Config) -> VisionProvider:

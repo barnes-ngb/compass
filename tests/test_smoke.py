@@ -105,6 +105,36 @@ def test_mock_audio_roundtrip() -> None:
     buf.close()
 
 
+def test_halo_glasses_satisfies_protocol_without_dependency() -> None:
+    """HaloGlasses must be importable and satisfy Glasses with brilliant-msg absent.
+
+    The heavy import is deferred into connect(); construction is dependency-free.
+    Does NOT call connect() (no hardware, no dependency in CI).
+    """
+    from compass.glasses.halo import HaloGlasses
+    from compass.glasses.base import Glasses
+    g = HaloGlasses()
+    assert isinstance(g, Glasses)
+
+
+def test_halo_glasses_connect_raises_clear_error_without_dependency() -> None:
+    """connect() names the install step when brilliant-msg is missing.
+
+    Skipped if brilliant-msg happens to be importable in this environment
+    (then connect() would try real BLE instead of raising).
+    """
+    try:
+        import brilliant_msg  # noqa: F401
+        pytest.skip("brilliant-msg is installed; dependency-error path not reachable")
+    except ImportError:
+        pass
+
+    from compass.glasses.halo import HaloGlasses
+    g = HaloGlasses()
+    with pytest.raises(RuntimeError, match="pip install brilliant-msg"):
+        g.connect()
+
+
 def test_glasses_protocol_is_structural() -> None:
     class FakeGlasses:
         def connect(self) -> None: ...
