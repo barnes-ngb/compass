@@ -203,7 +203,15 @@ class HaloGlasses:
             self._tap_queue = await RxTap().attach(self._msg)
             self._photo_queue = await RxPhoto().attach(self._msg)
 
-        self._run(_connect_async(), timeout=60.0)
+        try:
+            self._run(_connect_async(), timeout=60.0)
+        except BaseException:
+            # Setup failed partway (e.g. BLE connected but the app upload or
+            # Rx attach raised). The pipeline only enters its try/finally
+            # after connect() returns, so nobody will call close() for us —
+            # disconnect and release the loop thread here, then re-raise.
+            self.close()
+            raise
 
     def close(self) -> None:
         """Disconnect (plain BLE disconnect; advertising resumes — inspection
