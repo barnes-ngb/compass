@@ -37,10 +37,12 @@ class Config:
     # Memory
     memory_db: str
 
-    # Audio / STT (Phase 2)
+    # Audio / STT (verbal + retro modes)
+    audio_buffer: str
     audio_buffer_minutes: int
     stt_provider: str
     whisper_model: str
+    verbal_capture_seconds: float
 
 
 def _env(name: str, default: str = "") -> str:
@@ -67,7 +69,9 @@ def load_config() -> Config:
         glasses=_env("GLASSES", "mock").lower(),
         camera_index=int(_env("CAMERA_INDEX", "0")),
         memory_db=_env("MEMORY_DB", "./compass-memory.sqlite"),
+        audio_buffer=_env("AUDIO_BUFFER", "mock").lower(),
         audio_buffer_minutes=int(_env("AUDIO_BUFFER_MINUTES", "30")),
-        stt_provider=_env("STT_PROVIDER", "local").lower(),
-        whisper_model=_env("WHISPER_MODEL", "base.en"),
+        stt_provider=_env("STT_PROVIDER", "mock").lower(),
+        whisper_model=_env("WHISPER_MODEL", "small.en"),
+        verbal_capture_seconds=float(_env("VERBAL_CAPTURE_SECONDS", "8.0")),
     )

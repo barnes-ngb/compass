@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 
 from compass.audio.buffer import RollingBuffer
@@ -50,11 +49,10 @@ def _build_vision(cfg: Config) -> VisionProvider:
 
 
 def _build_audio_buffer(cfg: Config) -> RollingBuffer:
-    kind = os.environ.get("AUDIO_BUFFER", "mock").strip().lower()
-    if kind == "mock":
+    if cfg.audio_buffer == "mock":
         from compass.audio.buffer import MockRollingBuffer
         return MockRollingBuffer()
-    if kind == "laptop":
+    if cfg.audio_buffer == "laptop":
         try:
             from compass.audio.laptop_mic import LaptopMicBuffer
         except ImportError as exc:
@@ -63,15 +61,14 @@ def _build_audio_buffer(cfg: Config) -> RollingBuffer:
                 'Install with: pip install -e ".[audio]"'
             ) from exc
         return LaptopMicBuffer(max_seconds=cfg.audio_buffer_minutes * 60.0)
-    raise SystemExit(f"Unknown AUDIO_BUFFER={kind!r}. Use 'mock' or 'laptop'.")
+    raise SystemExit(f"Unknown AUDIO_BUFFER={cfg.audio_buffer!r}. Use 'mock' or 'laptop'.")
 
 
 def _build_stt(cfg: Config) -> STT:
-    kind = os.environ.get("STT_PROVIDER", "mock").strip().lower()
-    if kind == "mock":
+    if cfg.stt_provider == "mock":
         from compass.audio.stt import MockSTT
         return MockSTT()
-    if kind == "whisper":
+    if cfg.stt_provider == "whisper":
         try:
             from compass.audio.whisper_stt import WhisperSTT
         except ImportError as exc:
@@ -79,9 +76,8 @@ def _build_stt(cfg: Config) -> STT:
                 "STT_PROVIDER=whisper requires the audio extra. "
                 'Install with: pip install -e ".[audio]"'
             ) from exc
-        model_name = os.environ.get("WHISPER_MODEL", "small.en").strip()
-        return WhisperSTT(model_name=model_name)
-    raise SystemExit(f"Unknown STT_PROVIDER={kind!r}. Use 'mock' or 'whisper'.")
+        return WhisperSTT(model_name=cfg.whisper_model)
+    raise SystemExit(f"Unknown STT_PROVIDER={cfg.stt_provider!r}. Use 'mock' or 'whisper'.")
 
 
 def _build_coach(cfg: Config) -> CoachProvider:
@@ -125,8 +121,7 @@ def main() -> None:
         coach = _build_coach(cfg)
         buffer = _build_audio_buffer(cfg)
         stt = _build_stt(cfg)
-        capture_seconds = float(os.environ.get("VERBAL_CAPTURE_SECONDS", "8.0").strip())
-        run_verbal(glasses, buffer, stt, coach, memory, capture_seconds=capture_seconds)
+        run_verbal(glasses, buffer, stt, coach, memory, capture_seconds=cfg.verbal_capture_seconds)
     elif mode == "retro":
         coach = _build_coach(cfg)
         buffer = _build_audio_buffer(cfg)

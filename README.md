@@ -148,6 +148,8 @@ src/compass/
 ├── glasses/              Hardware abstraction (Phase 0 mock; Phase 1 real)
 │   ├── base.py           Glasses Protocol
 │   ├── mock.py           OpenCV webcam + simulated HUD
+│   ├── halo.py           Driver sketch — Brilliant Labs Halo over BLE (ADR 0009)
+│   ├── halo.lua          Reflex app running on the Halo itself
 │   └── frame.py          Stub — real Brilliant Labs Frame
 ├── vision/               Image → directive
 │   ├── base.py           VisionProvider Protocol
