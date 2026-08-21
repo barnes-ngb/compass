@@ -101,18 +101,24 @@ def run_verbal(
             if not glasses.wait_for_trigger():
                 break
 
-            # Context first — taken BEFORE the listening window so it holds the
-            # conversation leading up to the question, not the question itself.
-            context_audio = buffer.snapshot(seconds=context_seconds)
-
-            glasses.show_text(
-                "Listening...", f"speak now ({capture_seconds:.0f}s)", color="yellow"
-            )
-            if capture_seconds > 0:
-                time.sleep(capture_seconds)
-
+            # The whole interaction is guarded, as in retro: a capture, STT, or
+            # coach failure shows an error and waits for the next trigger rather
+            # than ending the session.
             t0 = time.perf_counter()
             try:
+                # Context first — taken BEFORE the listening window so it holds
+                # the conversation leading up to the question, not the question.
+                context_audio = buffer.snapshot(seconds=context_seconds)
+
+                glasses.show_text(
+                    "Listening...", f"speak now ({capture_seconds:.0f}s)", color="yellow"
+                )
+                if capture_seconds > 0:
+                    time.sleep(capture_seconds)
+
+                # Clock starts after the listen window: duration_s measures STT +
+                # coach, not the fixed wait.
+                t0 = time.perf_counter()
                 question_audio = buffer.snapshot(seconds=capture_seconds)
                 question_text = stt.transcribe(question_audio).strip()
                 if not question_text:
