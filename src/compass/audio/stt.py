@@ -1,11 +1,15 @@
-"""Speech-to-text for verbal + retro modes. STUB for Phase 2.
+"""Speech-to-text for verbal + retro modes.
 
-Two providers in mind:
+Defines the `STT` Protocol and its inert placeholder (`NullSTT`) and
+deterministic test double (`MockSTT`). The real implementation, `WhisperSTT`,
+lives in `whisper_stt.py` and is selected with STT_PROVIDER=whisper.
 
-- LocalWhisper (`faster-whisper` with model="base.en"): ~2-3 s for 60 s of
-  audio on a modern laptop CPU, fully private, free. Recommended default.
-- CloudSTT: Deepgram, AssemblyAI, or eventually Anthropic when audio inputs
-  are supported. ~0.5-1 s, costs ~$0.006/min, sends audio to vendor.
+- `WhisperSTT` (`faster-whisper`, default model "small.en", override with
+  WHISPER_MODEL): runs locally on the laptop CPU, fully private, free. This is
+  the shipped provider. "base.en" is the faster, less accurate alternative.
+- Cloud STT remains a future option: Deepgram, AssemblyAI, or eventually
+  Anthropic when audio inputs are supported. ~0.5-1 s, costs ~$0.006/min,
+  sends audio to a vendor. Not implemented.
 
 The pipeline doesn't care which; both implement the STT Protocol.
 """

@@ -1,4 +1,11 @@
-"""Rolling audio buffer for retro mode. STUB for Phase 2.
+"""Rolling audio buffer for verbal + retro modes.
+
+Defines the `RollingBuffer` Protocol and its inert placeholder
+(`NullRollingBuffer`) and deterministic test double (`MockRollingBuffer`).
+The real implementation, `LaptopMicBuffer`, lives in `laptop_mic.py` and is
+selected with AUDIO_BUFFER=laptop. Two of the three modes take a buffer:
+verbal pulls a short pre-trigger context window alongside the live capture,
+retro transcribes a snapshot of it. Visual mode does not use one at all.
 
 Design notes (see docs/decisions/0006-memory-layers.md for the full ADR):
 
@@ -7,7 +14,6 @@ Design notes (see docs/decisions/0006-memory-layers.md for the full ADR):
   the STT layer, which produces a transcript. The transcript may be persisted
   to the session log; the audio bytes are discarded immediately.
 - Default buffer length: 30 minutes. Configurable via AUDIO_BUFFER_MINUTES.
-- Always-armed in Phase 2+. In Phase 0–1, this stub is inert.
 - Sessions in V0 are tap-to-tap: user explicitly starts and ends a session,
   and "always-armed buffer" only runs while a session is active. Phase 1
   may add auto-end heuristics (silence > N minutes, calendar end-time).
