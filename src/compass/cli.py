@@ -125,7 +125,8 @@ def main() -> None:
         coach = _build_coach(cfg)
         buffer = _build_audio_buffer(cfg)
         stt = _build_stt(cfg)
-        run_verbal(glasses, buffer, stt, coach, memory)
+        capture_seconds = float(os.environ.get("VERBAL_CAPTURE_SECONDS", "8.0").strip())
+        run_verbal(glasses, buffer, stt, coach, memory, capture_seconds=capture_seconds)
     elif mode == "retro":
         coach = _build_coach(cfg)
         buffer = _build_audio_buffer(cfg)
