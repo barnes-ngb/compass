@@ -243,7 +243,7 @@ def test_run_retro_loops_once_and_logs() -> None:
 
 
 def test_run_verbal_loops_once_and_logs() -> None:
-    """Verbal mode: one synthetic trigger -> record -> STT -> coach -> memory logged."""
+    """Verbal mode: one trigger → capture window → STT → coach → memory logged."""
     import tempfile
     from compass.memory.store import MemoryStore
     from compass.audio.buffer import MockRollingBuffer
@@ -260,13 +260,47 @@ def test_run_verbal_loops_once_and_logs() -> None:
     stt = MockSTT()
     coach = MockCoach()
 
-    # listen_seconds=0.0 so the test does not actually sleep.
-    run_verbal(glasses, buffer, stt, coach, memory, listen_seconds=0.0)
+    # capture_seconds=0.01 so the test does not meaningfully sleep.
+    run_verbal(glasses, buffer, stt, coach, memory, capture_seconds=0.01)
 
     events = memory.recent_events(limit=5)
     assert len(events) == 1
     assert events[0]["mode"] == "verbal"
     assert events[0]["response"]  # non-empty
+
+
+def test_run_verbal_logs_spoken_question_as_the_query() -> None:
+    """Verbal mode's defining behavior: the transcribed speech IS the query.
+
+    Retro logs a fixed intent (`run_retro`'s `intent` default); verbal logs
+    what the wearer actually said and hands it to the coach as the intent
+    (`src/compass/pipeline.py` run_verbal). The canned transcript contains
+    "ask", so MockCoach returns its recall answer deterministically.
+    """
+    import tempfile
+    from compass.memory.store import MemoryStore
+    from compass.audio.buffer import MockRollingBuffer
+    from compass.audio.stt import MockSTT
+    from compass.coach.mock import MockCoach
+    from compass.pipeline import run_verbal
+
+    with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
+        db_path = tmp.name
+    memory = MemoryStore(db_path=db_path)
+
+    spoken = "what did they ask about Q3 panels"
+    glasses = _TestGlasses()
+    buffer = MockRollingBuffer(canned_transcript=spoken)
+    stt = MockSTT()
+    coach = MockCoach()
+
+    run_verbal(glasses, buffer, stt, coach, memory, capture_seconds=0.01)
+
+    events = memory.recent_events(limit=5)
+    assert len(events) == 1
+    assert events[0]["mode"] == "verbal"
+    assert events[0]["query"] == spoken          # the speech, not a fixed intent
+    assert events[0]["response"] == "they asked about Q3 panel schedule"
 
 
 def test_run_verbal_creates_and_finalizes_session() -> None:
@@ -288,7 +322,7 @@ def test_run_verbal_creates_and_finalizes_session() -> None:
     stt = MockSTT()
     coach = MockCoach()
 
-    run_verbal(glasses, buffer, stt, coach, memory, listen_seconds=0.0)
+    run_verbal(glasses, buffer, stt, coach, memory, capture_seconds=0.01)
 
     events = memory.recent_events(limit=5)
     assert len(events) == 1
