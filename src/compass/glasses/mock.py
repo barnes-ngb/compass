@@ -115,9 +115,14 @@ class MockGlasses:
         line1 = (line1 or "")[:28]
         line2 = (line2 or "")[:32]
         font = cv2.FONT_HERSHEY_DUPLEX
-        cls._draw_centered(canvas, line1, y=HUD_H // 2 - 20, font=font, scale=1.1, color=bgr, thickness=2)
+        cls._draw_centered(
+            canvas, line1, y=HUD_H // 2 - 20, font=font, scale=1.1, color=bgr, thickness=2
+        )
         if line2:
-            cls._draw_centered(canvas, line2, y=HUD_H // 2 + 30, font=font, scale=0.6, color=PALETTE["grey"], thickness=1)
+            cls._draw_centered(
+                canvas, line2, y=HUD_H // 2 + 30, font=font, scale=0.6,
+                color=PALETTE["grey"], thickness=1,
+            )
         return canvas
 
     @staticmethod
