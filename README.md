@@ -40,6 +40,7 @@ Pull-default — compass speaks when invoked, not when it feels like it. Persist
 | `docs/architecture.md` | Module responsibilities, the three modes, sequence diagrams, latency budgets |
 | `docs/roadmap.md` | Phases 0 → 3, exit criteria, backlog |
 | `docs/landscape.md` | Smart-glasses landscape + scheduled re-check triggers |
+| `docs/halo-wireup.md` | Hardware-day playbook: ordered checklist for wiring compass to a real Halo |
 | `docs/portfolio-fit.md` | How compass sits alongside scan-to-action, patina-model, directive-engine |
 | `docs/decisions/0001-mock-first.md` | Build against a mock before buying hardware |
 | `docs/decisions/0002-glasses-abstraction.md` | Why `Glasses` is a Protocol, not an ABC |
