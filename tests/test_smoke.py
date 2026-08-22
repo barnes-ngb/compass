@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from compass.audio.buffer import MockRollingBuffer, RollingBuffer
-from compass.audio.stt import MockSTT, STT
+from compass.audio.stt import STT, MockSTT
 from compass.coach.base import CoachProvider
 from compass.coach.mock import MockCoach
 from compass.glasses.base import Glasses
@@ -111,8 +111,8 @@ def test_halo_glasses_satisfies_protocol_without_dependency() -> None:
     The heavy import is deferred into connect(); construction is dependency-free.
     Does NOT call connect() (no hardware, no dependency in CI).
     """
-    from compass.glasses.halo import HaloGlasses
     from compass.glasses.base import Glasses
+    from compass.glasses.halo import HaloGlasses
     g = HaloGlasses()
     assert isinstance(g, Glasses)
 
@@ -209,7 +209,12 @@ class _TestGlasses:
     def capture_image(self) -> bytes:
         return b""
 
-    def show_text(self, line1: str, line2: str = "", *, color: str = "green") -> None:
+    # ARG002 is suppressed below: `color` is part of the Glasses protocol
+    # (src/compass/glasses/base.py:37); this fake accepts and ignores it.
+    # Changing the signature would break conformance.
+    def show_text(
+        self, line1: str, line2: str = "", *, color: str = "green"  # noqa: ARG002
+    ) -> None:
         self.last_text = (line1, line2)
 
     def close(self) -> None: ...
@@ -218,10 +223,11 @@ class _TestGlasses:
 def test_run_retro_loops_once_and_logs() -> None:
     """Retro mode: one synthetic trigger → buffer → STT → coach → memory logged."""
     import tempfile
-    from compass.memory.store import MemoryStore
+
     from compass.audio.buffer import MockRollingBuffer
     from compass.audio.stt import MockSTT
     from compass.coach.mock import MockCoach
+    from compass.memory.store import MemoryStore
     from compass.pipeline import run_retro
 
     with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
@@ -245,10 +251,11 @@ def test_run_retro_loops_once_and_logs() -> None:
 def test_run_verbal_loops_once_and_logs() -> None:
     """Verbal mode: one trigger → capture window → STT → coach → memory logged."""
     import tempfile
-    from compass.memory.store import MemoryStore
+
     from compass.audio.buffer import MockRollingBuffer
     from compass.audio.stt import MockSTT
     from compass.coach.mock import MockCoach
+    from compass.memory.store import MemoryStore
     from compass.pipeline import run_verbal
 
     with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
@@ -278,10 +285,11 @@ def test_run_verbal_logs_spoken_question_as_the_query() -> None:
     "ask", so MockCoach returns its recall answer deterministically.
     """
     import tempfile
-    from compass.memory.store import MemoryStore
+
     from compass.audio.buffer import MockRollingBuffer
     from compass.audio.stt import MockSTT
     from compass.coach.mock import MockCoach
+    from compass.memory.store import MemoryStore
     from compass.pipeline import run_verbal
 
     with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
@@ -313,10 +321,11 @@ def test_run_verbal_survives_a_context_snapshot_failure() -> None:
     from the identical failure.
     """
     import tempfile
-    from compass.memory.store import MemoryStore
+
     from compass.audio.buffer import MockRollingBuffer
     from compass.audio.stt import MockSTT
     from compass.coach.mock import MockCoach
+    from compass.memory.store import MemoryStore
     from compass.pipeline import run_verbal
 
     class _ContextFailsOnceBuffer(MockRollingBuffer):
@@ -367,10 +376,11 @@ def test_run_verbal_creates_and_finalizes_session() -> None:
     """One verbal run opens a session, logs an event under it, and finalizes
     the session with a transcript and a coach summary on exit."""
     import tempfile
-    from compass.memory.store import MemoryStore
+
     from compass.audio.buffer import MockRollingBuffer
     from compass.audio.stt import MockSTT
     from compass.coach.mock import MockCoach
+    from compass.memory.store import MemoryStore
     from compass.pipeline import run_verbal
 
     with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
@@ -411,10 +421,11 @@ def test_memory_session_lifecycle() -> None:
 def test_digest_rolls_up_day_sessions() -> None:
     """Two summarized sessions on a day roll up into one non-empty digest row."""
     import tempfile
-    from datetime import date
-    from compass.memory.store import MemoryStore
+    from datetime import UTC, datetime
+
     from compass.coach.mock import MockCoach
     from compass.digest import build_digest
+    from compass.memory.store import MemoryStore
 
     with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as tmp:
         db_path = tmp.name
@@ -425,7 +436,7 @@ def test_digest_rolls_up_day_sessions() -> None:
     s2 = memory.start_session(label="retro")
     memory.end_session(s2, transcript="t2", summary="install Tuesday")
 
-    day_iso = date.today().isoformat()
+    day_iso = datetime.now(UTC).astimezone().date().isoformat()
     digest = build_digest(memory, MockCoach(), day_iso)
 
     assert digest  # non-empty

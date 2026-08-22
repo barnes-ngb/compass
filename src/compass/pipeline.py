@@ -13,6 +13,7 @@ the Glasses + memory infrastructure.
 
 from __future__ import annotations
 
+import contextlib
 import time
 
 from compass.audio.buffer import RollingBuffer
@@ -242,10 +243,9 @@ def _finalize_session(
             summary = coach.respond("summarize this session", transcript, "")
         memory.end_session(session_id, transcript=transcript, summary=summary)
     except Exception:  # noqa: BLE001 — shutdown must not crash on a summary failure
-        try:
+        # Last-ditch close with no transcript/summary; a failure here is also swallowed.
+        with contextlib.suppress(Exception):
             memory.end_session(session_id)
-        except Exception:  # noqa: BLE001
-            pass
 
 
 def _two_lines(text: str, max1: int, max2: int) -> tuple[str, str]:

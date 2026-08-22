@@ -7,8 +7,8 @@ import sys
 
 from compass.audio.buffer import RollingBuffer
 from compass.audio.stt import STT
-from compass.config import Config, load_config
 from compass.coach.base import CoachProvider
+from compass.config import Config, load_config
 from compass.glasses.base import Glasses
 from compass.memory.store import MemoryStore
 from compass.pipeline import run_retro, run_verbal, run_visual

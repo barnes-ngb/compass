@@ -48,7 +48,9 @@ class LaptopMicBuffer:
         self._stream: sd.InputStream | None = None
         self._closed = False
 
-    def _callback(self, indata: np.ndarray, frames: int, time, status) -> None:  # noqa: ANN001
+    # ARG002 is suppressed below: `time` is required by sounddevice's callback
+    # signature (indata, frames, time, status); dropping it would break the stream.
+    def _callback(self, indata: np.ndarray, frames: int, time, status) -> None:  # noqa: ANN001, ARG002
         if status:
             # Drop frames on overflow; never block the audio thread.
             return

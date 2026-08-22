@@ -13,7 +13,7 @@ Builds only a coach and the memory store. No glasses, no audio, no pipeline.
 from __future__ import annotations
 
 import argparse
-from datetime import date
+from datetime import UTC, datetime
 
 from compass.coach.base import CoachProvider
 from compass.config import Config, load_config
@@ -58,7 +58,9 @@ def main() -> None:
         "--date", default=None, help="Day to roll up, YYYY-MM-DD. Default: today."
     )
     args = parser.parse_args()
-    day_iso = args.date or date.today().isoformat()
+    # Local calendar day, stated explicitly: MemoryStore.sessions_for_day
+    # windows on local-day boundaries.
+    day_iso = args.date or datetime.now(UTC).astimezone().date().isoformat()
 
     cfg = load_config()
     memory = MemoryStore(cfg.memory_db)

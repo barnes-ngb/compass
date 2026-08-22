@@ -333,7 +333,7 @@ class HaloGlasses:
         # halo.lua's on_data. Small enough to fit one MTU chunk (<=512,
         # inspection §3.1); multi-chunk reassembly of host->device user data
         # would be the app's job (§2.1) and is deliberately not needed here.
-        payload = f"{rgb:06X}\n{line1}\n{line2}".encode("utf-8")
+        payload = f"{rgb:06X}\n{line1}\n{line2}".encode()
 
         async def _send() -> None:
             await self._msg.send_message(MSG_TEXT, payload)  # per msg README

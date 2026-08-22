@@ -155,9 +155,14 @@ class MemoryStore:
 
     def sessions_for_day(self, day_iso: str) -> list[dict]:
         """Sessions whose start falls within the local day `day_iso` (YYYY-MM-DD)."""
-        day = datetime.strptime(day_iso, "%Y-%m-%d")
-        start_ts = day.timestamp()
-        end_ts = (day + timedelta(days=1)).timestamp()
+        # .astimezone() on a naive datetime resolves it in the machine's local
+        # zone, making the local-day contract above explicit. Adding the day
+        # before re-resolving keeps DST-length days correct (23h/25h), which a
+        # fixed-offset +timedelta would not.
+        start = datetime.strptime(day_iso, "%Y-%m-%d").astimezone()
+        end = (start.replace(tzinfo=None) + timedelta(days=1)).astimezone()
+        start_ts = start.timestamp()
+        end_ts = end.timestamp()
         with closing(sqlite3.connect(self._path)) as conn:
             conn.row_factory = sqlite3.Row
             rows = conn.execute(

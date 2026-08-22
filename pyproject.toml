@@ -68,3 +68,11 @@ addopts = "-ra"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint]
+# Pinned so the rule set stops tracking ruff's default selection, which shifts
+# between releases. This is not full cross-release reproducibility: these are
+# category prefixes, so a stable rule added to any of them by a later ruff can
+# fail unchanged code, and the dev extra's `ruff>=0.6` is unbounded.
+# Deliberately excludes ANN / D / COM.
+select = ["E", "F", "I", "UP", "B", "DTZ", "ARG", "SIM"]
