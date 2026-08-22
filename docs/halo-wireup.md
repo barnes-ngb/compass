@@ -28,7 +28,7 @@ absent). That number should not drop.
   protocol docs moved, **re-read the changed sections before debugging
   anything** — a stale citation looks exactly like a driver bug.
 - **Firmware version on the shipped device.** The driver was written against
-  brilliant-msg docs claiming a true-up to firmware 0.8.8 (`halo.py:6`).
+  brilliant-msg docs claiming a true-up to firmware 0.8.8 (`halo.py:6-7`).
   Record what ships and whether it matches.
 - **`.env` ready:** `GLASSES=halo`, plus `ANTHROPIC_API_KEY`,
   `VISION_PROVIDER=claude`, `COACH_PROVIDER=claude`, and for verbal/retro
@@ -62,19 +62,22 @@ disconnect surface?), `halo.py:31` / `halo.lua:67` (#6: is the msg code byte 1
 of the Lua payload, and do compass's `MSG_*` codes collide?), `halo.lua:115`
 (#1: registration shape for `frame.button.single/double` and
 `frame.imu.tap_callback`).
-*Run:* `HaloGlasses().connect()` in a REPL. *Success:* "compass ready" on the
+*Run:* in a REPL, `g = HaloGlasses()` then `g.connect()` — keep the handle,
+§2.2–2.4 reuse it, and `g.close()` when done. Halo allows one connection at a
+time (§PAIRING 3.3) and the driver holds a live loop thread until `close()`, so
+a discarded instance blocks the next attempt. *Success:* "compass ready" on the
 HUD (`halo.lua:126`) — proves upload + runtime restart + render in one shot.
-*Failure:* no HUD text and no exception means the app uploaded and died; an
-exception self-cleans (`halo.py:180`) — read which await raised.
+*Failure:* no HUD text and no exception means the app uploaded and died; a
+raising `connect()` self-cleans (`halo.py:206-214`) — read which await failed.
 
 **2.2 `show_text()`** — `halo.py:61` (chars-per-line), `halo.lua:28` (#4: no
 documented way to clear drawn text; `display.show` is a no-op), `halo.lua:33`
 (#7: host→device payloads over one MTU need app-side reassembly; compass
 assumes single-chunk). Cheapest full-chain check: host → BLE → Lua → render.
-*Run:* `show_text()` with long strings and every name in `COLORS`
-(`halo.py:38`). *Record:* real chars-per-line at the font `halo.lua` sets,
+*Run:* `g.show_text()` with long strings and every name in `COLORS`
+(`halo.py:48`). *Record:* real chars-per-line at the font `halo.lua` sets,
 versus the 28/32 from `MockGlasses` (`mock.py:115-116`) and the 30 assumed at
-`halo.py:65-66`; whether successive draws overwrite or smear. *Failure:*
+`halo.py:64-65`; whether successive draws overwrite or smear. *Failure:*
 garbled ⇒ framing offset (#6); nothing ⇒ codes or connection.
 
 **2.3 `wait_for_trigger()`** — `halo.py:276` (does RxTap yield `str` or
@@ -84,7 +87,7 @@ confirm it works worn, and measure the documented single-tap delay of ~one
 gesture window (§7.6). *Record:* which gesture actually fires, false-positives
 while walking, whether button and IMU both report. *Failure:* no taps ⇒
 callback registration; wrong kind ⇒ the `last_trigger_kind` mapping
-(`halo.py:284-290`).
+(`halo.py:277-283`).
 
 **2.4 `capture_image()`** — `halo.py:308` (does RxPhoto yield assembled bytes,
 and does the Lua sentinel match its final-chunk rule?), `:108` (is `MEDIUM` a
@@ -146,7 +149,7 @@ Measurements become follow-up PRs or an ADR postscript, never a silent edit:
   ADR 0009's re-evaluation trigger and a `docs/roadmap.md` Phase 2 exit
   criterion — a decision point, not a silent failure.
 - Real display constraints (chars-per-line, clearing) → replaces the 28/30
-  constants at `halo.py:65-66`.
+  constants at `halo.py:64-65`.
 - Gesture behavior worn, including the single-tap delay.
 - Anything the inspection report got wrong → a new dated report in
   `docs/inspection/`, not an edit to the 2026-08-19 one.
