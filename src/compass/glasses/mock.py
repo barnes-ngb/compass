@@ -112,8 +112,13 @@ class MockGlasses:
     def _render_hud(cls, line1: str, line2: str, color: str) -> np.ndarray:
         canvas = cls._blank_hud()
         bgr = PALETTE.get(color, PALETTE["white"])
+        # Truncation matches HaloGlasses (halo.py LINE1_MAX/LINE2_MAX): Halo
+        # renders Dogica 8px at 30 chars/line, so line2 clips at 30, not the
+        # 32 this simulator used to allow. The simulator must never be more
+        # generous than the hardware — text tuned here would otherwise clip
+        # on the device, and nobody would find out until wearing it.
         line1 = (line1 or "")[:28]
-        line2 = (line2 or "")[:32]
+        line2 = (line2 or "")[:30]
         font = cv2.FONT_HERSHEY_DUPLEX
         cls._draw_centered(
             canvas, line1, y=HUD_H // 2 - 20, font=font, scale=1.1, color=bgr, thickness=2

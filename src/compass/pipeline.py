@@ -54,7 +54,7 @@ def run_visual(
                 glasses.show_text("(no answer)", color="grey")
                 continue
 
-            line1, line2 = _two_lines(answer, max1=28, max2=32)
+            line1, line2 = _two_lines(answer, max1=28, max2=30)
             glasses.show_text(line1, line2 or f"{dt:.1f}s", color="green")
 
             # Memory: log every visual query so they're queryable later.
@@ -143,7 +143,7 @@ def run_verbal(
                 glasses.show_text("(no answer)", color="grey")
                 continue
 
-            line1, line2 = _two_lines(answer, max1=28, max2=32)
+            line1, line2 = _two_lines(answer, max1=28, max2=30)
             glasses.show_text(line1, line2 or f"{dt:.1f}s", color="green")
 
             memory.log_event(
@@ -200,7 +200,7 @@ def run_retro(
                 glasses.show_text("(no answer)", color="grey")
                 continue
 
-            line1, line2 = _two_lines(answer, max1=28, max2=32)
+            line1, line2 = _two_lines(answer, max1=28, max2=30)
             glasses.show_text(line1, line2 or f"{dt:.1f}s", color="green")
 
             memory.log_event(

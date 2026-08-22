@@ -87,3 +87,38 @@ Not a commitment, just plausible signals:
 - `docs/inspection/2026-05-20-sibling-repos.md` — directive-engine as the consumption target
 - Halo SDK: https://docs.brilliant.xyz/halo/halo-sdk/
 - `brilliant_sdk` repo: https://github.com/brilliantlabsAR/brilliant_sdk
+
+## Postscript: 2026-08-21 — trigger vocabulary deferred; halo.lua diverges from Decision §2
+
+Two updates from the HaloGlasses sketch (PR #30), written against the firmware
+inspection report.
+
+**halo.lua uses double-tap, not hold, for the retro trigger.** Decision §2 of
+this ADR specified a >500 ms button hold. The firmware reserves holds of two
+seconds or more, and the inspection report recommends double-tap instead. The
+implemented reflex app follows the firmware: single tap triggers, double tap
+signals retro.
+
+**The retro flag has no home in the Protocol, and that is deliberate for now.**
+`Glasses.wait_for_trigger() -> bool` cannot express which gesture fired.
+`HaloGlasses` stashes it on a `last_trigger_kind` attribute, which is an
+implementation detail outside the Protocol; no pipeline code reads it.
+
+The Protocol is not being changed yet. V0 does not need it: `run_visual`,
+`run_verbal`, and `run_retro` are separate loops selected at launch via
+`--mode`, so a single trigger kind is sufficient. A gesture-to-mode mapping
+only matters for a future unified session where one running app serves all
+three modes, which is the right eventual shape for worn hardware but is not
+required for hardware day.
+
+Deferring is also the safer call because the trigger vocabulary has never been
+exercised on a device. Tap reliability, the double-tap timing window, and the
+false-positive rate are all unknown, and the available gestures are constrained
+by firmware. Designing the vocabulary before wearing the hardware risks
+designing it wrong.
+
+**When this is revisited**, the honest change is
+`wait_for_trigger() -> TriggerKind | None` rather than a bool plus a side
+channel. Cost is bounded: three `Glasses` implementations and three call sites
+in `pipeline.py`. Trigger for revisiting: building the unified single-app mode,
+or a first real session showing the gesture set needs to differ.
