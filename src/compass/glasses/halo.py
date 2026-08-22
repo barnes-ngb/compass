@@ -55,9 +55,10 @@ COLORS = {
     "cloudblue": 0x78C8DC,
 }
 
-# Halo renders Dogica 8px at 30 chars/line (msg CHANGELOG 7.1.0). That is
-# tighter than MockGlasses' 32-char line2, so line2 truncates at 30; line1
-# keeps mock parity at 28 (< 30, so still safe).
+# Halo renders Dogica 8px at 30 chars/line (msg CHANGELOG 7.1.0), so line2
+# truncates at 30; line1 keeps parity with MockGlasses at 28 (< 30, so still
+# safe). MockGlasses used to allow 32 on line2 and now clips at 30 to match
+# — the simulator must not be more generous than the hardware.
 # TODO(hardware): the firmware repo itself doesn't document chars-per-line
 # (inspection §show_text row: "verify on hardware") — confirm 30 holds at the
 # font size halo.lua actually sets.
@@ -135,6 +136,16 @@ class HaloGlasses:
         self.resolution = resolution
         self.trigger_timeout_s = trigger_timeout_s
         self.capture_timeout_s = capture_timeout_s
+        # Which gesture fired the last trigger: "single" | "retro" | None.
+        # This is a HaloGlasses implementation detail — it is NOT part of the
+        # `Glasses` Protocol (`src/compass/glasses/base.py`), and no pipeline
+        # code reads it (`run_visual`/`run_verbal`/`run_retro` in
+        # `src/compass/pipeline.py` select their mode at launch via `--mode`).
+        # It is reserved for future unified-mode work, where one running app
+        # would serve all three modes and need the gesture-to-mode mapping;
+        # see ADR 0009's "trigger vocabulary deferred" postscript
+        # (`docs/decisions/0009-halo-language-strategy.md`) for why the
+        # Protocol is not being widened to carry it yet.
         self.last_trigger_kind: str | None = None
 
         self._msg: Any = None            # brilliant_msg.BrilliantMsg once connected
@@ -321,9 +332,9 @@ class HaloGlasses:
         Colors map compass names to 24-bit RGB — Halo's display.text takes
         0xRRGGBB per call (inspection §7.10; a 16-entry palette exists
         internally but text() takes RGB directly). Unknown names fall back
-        to white, like MockGlasses. Truncation: 28 chars line1 (mock
-        parity) / 30 chars line2 (Dogica 8px = 30 chars/line on Halo, msg
-        CHANGELOG 7.1.0 — tighter than mock's 32).
+        to white, like MockGlasses. Truncation: 28 chars line1 / 30 chars
+        line2 (Dogica 8px = 30 chars/line on Halo, msg CHANGELOG 7.1.0);
+        MockGlasses clips at the same widths.
         """
         assert self._msg is not None, "Call connect() first"
         rgb = COLORS.get(color, COLORS["white"])
